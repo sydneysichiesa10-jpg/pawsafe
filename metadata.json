@@ -1,0 +1,6 @@
+{
+  "name": "PawSafe",
+  "description": "Compassionate stray animal rescue, foster triage, and pet adoption platform for Indonesia.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
