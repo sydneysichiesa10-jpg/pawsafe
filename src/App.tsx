@@ -25,7 +25,26 @@ import { EditProfileModal } from './components/modals/EditProfileModal';
 export default function App() {
   const [currentTab, setCurrentTab] = useState<NavTab>('adopt');
   const [selectedPet, setSelectedPet] = useState<Pet>(PETS_DATA[0]); // Barnaby
-  const [favorites, setFavorites] = useState<string[]>(['barnaby']);
+  // Saved / Favorited pets (defaults to empty when logged out / initial guest)
+  const [favorites, setFavorites] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('pawsafe_favorites');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Clear out legacy default ['barnaby'] if present
+        if (Array.isArray(parsed)) {
+          if (parsed.length === 1 && parsed[0] === 'barnaby') {
+            localStorage.removeItem('pawsafe_favorites');
+            return [];
+          }
+          return parsed;
+        }
+      }
+    } catch {
+      // Fallback
+    }
+    return [];
+  });
   const [currentLocation, setCurrentLocation] = useState('Jakarta (Selatan & Pusat)');
   const [unreadNotifications, setUnreadNotifications] = useState(2);
 
@@ -66,9 +85,20 @@ export default function App() {
   };
 
   const toggleFavorite = (petId: string) => {
-    setFavorites((prev) =>
-      prev.includes(petId) ? prev.filter((id) => id !== petId) : [...prev, petId]
-    );
+    setFavorites((prev) => {
+      const isCurrentlyFav = prev.includes(petId);
+      const next = isCurrentlyFav ? prev.filter((id) => id !== petId) : [...prev, petId];
+      try {
+        localStorage.setItem('pawsafe_favorites', JSON.stringify(next));
+      } catch {
+        // Ignore
+      }
+      showToast(
+        isCurrentlyFav ? 'heart_broken' : 'favorite',
+        isCurrentlyFav ? 'Removed from Saved Pets' : 'Saved to your favorites!'
+      );
+      return next;
+    });
   };
 
   const handleCallPhone = (phone: string) => {
@@ -110,8 +140,10 @@ export default function App() {
       city: currentLocation,
     };
     setUserProfile(guestProfile);
+    setFavorites([]);
     try {
       localStorage.setItem('pawsafe_user_profile', JSON.stringify(guestProfile));
+      localStorage.removeItem('pawsafe_favorites');
     } catch {
       // Ignore
     }

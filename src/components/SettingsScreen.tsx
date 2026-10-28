@@ -251,7 +251,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
         {favoritedPets.length === 0 ? (
           <p className="text-[13px] text-[#707973] py-2">
-            You haven't saved any pets yet. Tap the heart icon on Barnaby or any pal to save them here!
+            You haven't saved any pets yet. Tap the heart icon on any pet profile to save them here!
           </p>
         ) : (
           <div className="grid grid-cols-2 gap-2.5 pt-1">
