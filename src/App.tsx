@@ -4,8 +4,8 @@
  */
 
 import { useState } from 'react';
-import { Pet, RadarSighting } from './types';
-import { PETS_DATA, RADAR_SIGHTINGS } from './data/mockData';
+import { Pet, RadarSighting, UserProfile } from './types';
+import { PETS_DATA, RADAR_SIGHTINGS, DEFAULT_GUEST_PROFILE } from './data/mockData';
 import { Header } from './components/Header';
 import { BottomNav, NavTab } from './components/BottomNav';
 import { AdoptScreen } from './components/AdoptScreen';
@@ -19,6 +19,8 @@ import { CoordinatorModal } from './components/modals/CoordinatorModal';
 import { LocationModal } from './components/modals/LocationModal';
 import { NotificationsModal } from './components/modals/NotificationsModal';
 import { DirectionsModal } from './components/modals/DirectionsModal';
+import { AuthModal } from './components/modals/AuthModal';
+import { EditProfileModal } from './components/modals/EditProfileModal';
 
 export default function App() {
   const [currentTab, setCurrentTab] = useState<NavTab>('adopt');
@@ -27,6 +29,24 @@ export default function App() {
   const [currentLocation, setCurrentLocation] = useState('Jakarta (Selatan & Pusat)');
   const [unreadNotifications, setUnreadNotifications] = useState(2);
 
+  // User Profile state (defaults to logged out / Guest mode)
+  const [userProfile, setUserProfile] = useState<UserProfile>(() => {
+    try {
+      const saved = localStorage.getItem('pawsafe_user_profile');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // If prior cache had Sydney Sichiesa from the old mock default, reset to logged out Guest
+        if (parsed.id === 'user-sydney' || parsed.username === 'sydney_rescuer' || parsed.fullName === 'Sydney Sichiesa') {
+          return DEFAULT_GUEST_PROFILE;
+        }
+        return parsed;
+      }
+    } catch {
+      // Fallback
+    }
+    return DEFAULT_GUEST_PROFILE;
+  });
+
   // Modals
   const [applyPet, setApplyPet] = useState<Pet | null>(null);
   const [schedulePet, setSchedulePet] = useState<Pet | null>(null);
@@ -34,9 +54,16 @@ export default function App() {
   const [directionsAddress, setDirectionsAddress] = useState<string | null>(null);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const [isNotificationsModalOpen, setIsNotificationsModalOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
 
-  // Call phone notification
-  const [phoneToast, setPhoneToast] = useState<string | null>(null);
+  // Global Toast Alert
+  const [toastMessage, setToastMessage] = useState<{ icon: string; text: string } | null>(null);
+
+  const showToast = (icon: string, text: string) => {
+    setToastMessage({ icon, text });
+    setTimeout(() => setToastMessage(null), 3500);
+  };
 
   const toggleFavorite = (petId: string) => {
     setFavorites((prev) =>
@@ -45,17 +72,50 @@ export default function App() {
   };
 
   const handleCallPhone = (phone: string) => {
-    // Open tel protocol or show actionable banner
-    setPhoneToast(`Connecting to ${phone}...`);
+    showToast('call', `Connecting to ${phone}...`);
     setTimeout(() => {
       window.location.href = `tel:${phone.replace(/[^\d+]/g, '')}`;
     }, 200);
-    setTimeout(() => setPhoneToast(null), 3500);
   };
 
   const handleSightingReported = (_newSighting: RadarSighting) => {
     RADAR_SIGHTINGS.unshift(_newSighting);
     setUnreadNotifications((n) => n + 1);
+  };
+
+  const handleLoginSuccess = (profile: UserProfile) => {
+    setUserProfile(profile);
+    try {
+      localStorage.setItem('pawsafe_user_profile', JSON.stringify(profile));
+    } catch {
+      // Ignore
+    }
+    showToast('check_circle', `Welcome, ${profile.nickname}!`);
+  };
+
+  const handleSaveProfile = (updatedProfile: UserProfile) => {
+    setUserProfile(updatedProfile);
+    try {
+      localStorage.setItem('pawsafe_user_profile', JSON.stringify(updatedProfile));
+    } catch {
+      // Ignore
+    }
+    showToast('check_circle', 'Profile updated successfully!');
+  };
+
+  const handleLogout = () => {
+    const guestProfile: UserProfile = {
+      ...DEFAULT_GUEST_PROFILE,
+      id: `guest-${Date.now()}`,
+      city: currentLocation,
+    };
+    setUserProfile(guestProfile);
+    try {
+      localStorage.setItem('pawsafe_user_profile', JSON.stringify(guestProfile));
+    } catch {
+      // Ignore
+    }
+    showToast('info', 'Browsing as Guest. You can sign in anytime in Settings.');
   };
 
   return (
@@ -65,6 +125,7 @@ export default function App() {
         {/* Header */}
         <Header
           currentLocation={currentLocation}
+          userProfile={userProfile}
           onOpenLocationPicker={() => setIsLocationModalOpen(true)}
           onOpenNotifications={() => {
             setIsNotificationsModalOpen(true);
@@ -74,11 +135,11 @@ export default function App() {
           unreadCount={unreadNotifications}
         />
 
-        {/* Global Phone Toast Alert */}
-        {phoneToast && (
+        {/* Global Toast Alert */}
+        {toastMessage && (
           <div className="fixed top-20 inset-x-4 max-w-sm mx-auto z-50 bg-[#004732] text-white px-5 py-3 rounded-full shadow-xl text-[13px] font-bold text-center flex items-center justify-center gap-2 animate-bounce">
-            <span className="material-symbols-outlined text-[18px]">call</span>
-            <span>{phoneToast}</span>
+            <span className="material-symbols-outlined text-[18px]">{toastMessage.icon}</span>
+            <span>{toastMessage.text}</span>
           </div>
         )}
 
@@ -108,6 +169,7 @@ export default function App() {
 
           {currentTab === 'report' && (
             <ReportScreen
+              userProfile={userProfile}
               onSightingReported={handleSightingReported}
               onNavigateToRadar={() => setCurrentTab('radar')}
             />
@@ -122,6 +184,10 @@ export default function App() {
 
           {currentTab === 'settings' && (
             <SettingsScreen
+              userProfile={userProfile}
+              onOpenAuth={() => setIsAuthModalOpen(true)}
+              onOpenEditProfile={() => setIsEditProfileModalOpen(true)}
+              onLogout={handleLogout}
               favorites={favorites}
               onSelectPet={setSelectedPet}
               onNavigateToAdopt={() => setCurrentTab('adopt')}
@@ -172,7 +238,25 @@ export default function App() {
             onNavigateToAdopt={() => setCurrentTab('adopt')}
           />
         )}
+
+        {/* Login / Sign Up Modal */}
+        {isAuthModalOpen && (
+          <AuthModal
+            onClose={() => setIsAuthModalOpen(false)}
+            onLoginSuccess={handleLoginSuccess}
+          />
+        )}
+
+        {/* Edit Profile Modal (Avatar, Username, Nickname, Bio, etc.) */}
+        {isEditProfileModalOpen && (
+          <EditProfileModal
+            profile={userProfile}
+            onClose={() => setIsEditProfileModalOpen(false)}
+            onSave={handleSaveProfile}
+          />
+        )}
       </div>
     </div>
   );
 }
+

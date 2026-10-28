@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { RadarSighting } from '../types';
+import { RadarSighting, UserProfile } from '../types';
 
 interface ReportScreenProps {
   onSightingReported: (newSighting: RadarSighting) => void;
   onNavigateToRadar: () => void;
+  userProfile?: UserProfile;
 }
 
 export const ReportScreen: React.FC<ReportScreenProps> = ({
   onSightingReported,
   onNavigateToRadar,
+  userProfile,
 }) => {
   const [animalType, setAnimalType] = useState<'dog' | 'cat' | 'puppies' | 'reptile' | 'bird' | 'other'>('dog');
   const [urgency, setUrgency] = useState<'critical' | 'urgent' | 'moderate'>('urgent');
@@ -62,7 +64,7 @@ export const ReportScreen: React.FC<ReportScreenProps> = ({
       status: 'Searching',
       respondersCount: 1,
       image: photoPreview,
-      reportedBy: 'You (Sydney)',
+      reportedBy: userProfile?.isLoggedIn ? `You (${userProfile.nickname})` : 'You (Guest Rescuer)',
     };
 
     setTimeout(() => {

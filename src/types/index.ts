@@ -72,3 +72,21 @@ export interface EmergencyClinic {
   services: string[];
   verified: boolean;
 }
+
+export interface UserProfile {
+  id: string;
+  isLoggedIn: boolean;
+  username: string;
+  nickname: string;
+  fullName: string;
+  email: string;
+  avatar: string;
+  bio: string;
+  phone: string;
+  city: string;
+  role: 'Volunteer Rescuer' | 'Foster Parent' | 'Pet Adopter' | 'Animal Advocate';
+  rescuesAssisted: number;
+  petsFostered: number;
+  joinedDate: string;
+}
+

@@ -1,8 +1,10 @@
 import React from 'react';
-import { PAWSAFE_LOGO, USER_AVATAR } from '../data/mockData';
+import { PAWSAFE_LOGO } from '../data/mockData';
+import { UserProfile } from '../types';
 
 interface HeaderProps {
   currentLocation: string;
+  userProfile: UserProfile;
   onOpenLocationPicker: () => void;
   onOpenNotifications: () => void;
   onOpenProfile: () => void;
@@ -11,6 +13,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({
   currentLocation,
+  userProfile,
   onOpenLocationPicker,
   onOpenNotifications,
   onOpenProfile,
@@ -67,14 +70,20 @@ export const Header: React.FC<HeaderProps> = ({
 
           <button
             onClick={onOpenProfile}
-            className="flex items-center pl-1 focus:outline-none cursor-pointer group"
-            title="Sydney Sichiesa • Rescuer Profile"
+            className="flex items-center pl-1 focus:outline-none cursor-pointer group relative"
+            title={userProfile.isLoggedIn ? `${userProfile.nickname} • Rescuer Profile` : 'Guest Profile & Settings'}
           >
-            <img
-              alt="Sydney Sichiesa Profile"
-              className="w-9 h-9 rounded-full object-cover ring-2 ring-[#004732]/25 shadow-sm group-hover:ring-[#004732] transition-all"
-              src={USER_AVATAR}
-            />
+            {userProfile.isLoggedIn ? (
+              <img
+                alt={`${userProfile.nickname} Profile`}
+                className="w-9 h-9 rounded-full object-cover ring-2 ring-[#004732]/25 shadow-sm group-hover:ring-[#004732] transition-all"
+                src={userProfile.avatar}
+              />
+            ) : (
+              <div className="w-9 h-9 rounded-full bg-[#ecf6f1] text-[#004732] flex items-center justify-center ring-2 ring-[#e6f0eb] group-hover:ring-[#004732]/40 transition-all shadow-sm">
+                <span className="material-symbols-outlined text-[20px]">person</span>
+              </div>
+            )}
           </button>
         </div>
       </div>

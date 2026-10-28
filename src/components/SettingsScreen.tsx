@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
-import { USER_AVATAR, PETS_DATA } from '../data/mockData';
-import { Pet } from '../types';
+import { PETS_DATA } from '../data/mockData';
+import { Pet, UserProfile } from '../types';
 
 interface SettingsScreenProps {
+  userProfile: UserProfile;
+  onOpenAuth: () => void;
+  onOpenEditProfile: () => void;
+  onLogout: () => void;
   favorites: string[];
   onSelectPet: (pet: Pet) => void;
   onNavigateToAdopt: () => void;
@@ -10,6 +14,10 @@ interface SettingsScreenProps {
 }
 
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({
+  userProfile,
+  onOpenAuth,
+  onOpenEditProfile,
+  onLogout,
   favorites,
   onSelectPet,
   onNavigateToAdopt,
@@ -60,48 +68,139 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
       {/* Title */}
       <div>
         <h1 className="text-[22px] font-bold text-[#141d1a] tracking-tight">Rescuer Hub &amp; Settings</h1>
-        <p className="text-[13px] text-[#404944]">Sydney Sichiesa • PawSafe Volunteer Indonesia</p>
+        <p className="text-[13px] text-[#404944]">
+          {userProfile.isLoggedIn
+            ? `${userProfile.nickname} (@${userProfile.username}) • PawSafe Volunteer`
+            : 'PawSafe Indonesia • Guest Mode (Optional Sign In)'}
+        </p>
       </div>
 
-      {/* Profile Card */}
-      <div className="bg-white rounded-3xl p-5 shadow-sm border border-[#e6f0eb] space-y-4">
-        <div className="flex items-center gap-3.5">
-          <img
-            src={USER_AVATAR}
-            alt="Sydney Sichiesa"
-            className="w-16 h-16 rounded-full object-cover ring-4 ring-[#aff0d2] shadow-sm"
-          />
-          <div className="min-w-0">
-            <div className="flex items-center gap-1.5">
-              <h2 className="text-[18px] font-bold text-[#141d1a]">Sydney Sichiesa</h2>
-              <span className="material-symbols-outlined text-[18px] text-[#004732] icon-filled">
-                verified
-              </span>
+      {/* Profile Card / Auth Card */}
+      {userProfile.isLoggedIn ? (
+        <div className="bg-white rounded-3xl p-5 shadow-sm border border-[#e6f0eb] space-y-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3.5 min-w-0">
+              <div className="relative">
+                <img
+                  src={userProfile.avatar}
+                  alt={userProfile.nickname}
+                  className="w-16 h-16 rounded-full object-cover ring-4 ring-[#aff0d2] shadow-sm flex-shrink-0"
+                />
+                <button
+                  type="button"
+                  onClick={onOpenEditProfile}
+                  className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[#004732] text-white flex items-center justify-center shadow-md hover:bg-[#003827] cursor-pointer"
+                  title="Change photo"
+                >
+                  <span className="material-symbols-outlined text-[13px]">photo_camera</span>
+                </button>
+              </div>
+
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <h2 className="text-[18px] font-bold text-[#141d1a] truncate">{userProfile.fullName}</h2>
+                  <span className="material-symbols-outlined text-[18px] text-[#004732] icon-filled">
+                    verified
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 text-[12px] text-[#404944] mt-0.5">
+                  <span className="font-semibold text-[#004732]">@{userProfile.username}</span>
+                  <span>•</span>
+                  <span>Nickname: <strong className="text-[#141d1a]">{userProfile.nickname}</strong></span>
+                </div>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="inline-block text-[11px] font-semibold text-[#004732] bg-[#ecf6f1] px-2.5 py-0.5 rounded-full">
+                    {userProfile.role}
+                  </span>
+                </div>
+              </div>
             </div>
-            <p className="text-[13px] text-[#404944]">Volunteer Rescuer &amp; Foster</p>
-            <p className="text-[12px] text-[#004732] font-semibold flex items-center gap-1 mt-0.5">
-              <span className="material-symbols-outlined text-[14px]">location_on</span>
-              {currentLocation}
+          </div>
+
+          {/* User Bio if present */}
+          {userProfile.bio && (
+            <p className="text-[12px] text-[#404944] bg-[#f2fcf6] p-2.5 rounded-2xl border border-[#e6f0eb]/60 leading-relaxed">
+              "{userProfile.bio}"
+            </p>
+          )}
+
+          {/* Profile Action Buttons */}
+          <div className="flex items-center gap-2 pt-1 border-t border-[#f2fcf6]">
+            <button
+              type="button"
+              onClick={onOpenEditProfile}
+              className="flex-1 py-2 px-3 bg-[#ecf6f1] text-[#004732] hover:bg-[#e0eae5] rounded-2xl text-[12px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+            >
+              <span className="material-symbols-outlined text-[16px]">edit</span>
+              <span>Edit Profile</span>
+            </button>
+            <button
+              type="button"
+              onClick={onLogout}
+              className="py-2 px-3.5 bg-[#f2fcf6] text-[#707973] hover:text-[#a13e28] hover:bg-[#faece7] rounded-2xl text-[12px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1"
+              title="Sign Out to Guest Mode"
+            >
+              <span className="material-symbols-outlined text-[16px]">logout</span>
+              <span>Sign Out</span>
+            </button>
+          </div>
+
+          {/* Rescuer Stats Bento */}
+          <div className="grid grid-cols-3 gap-2 pt-2 border-t border-[#f2fcf6]">
+            <div className="bg-[#ecf6f1] p-2.5 rounded-2xl text-center">
+              <p className="text-[18px] font-bold text-[#004732]">{userProfile.rescuesAssisted}</p>
+              <p className="text-[11px] text-[#404944] font-medium">Rescues Assisted</p>
+            </div>
+            <div className="bg-[#ecf6f1] p-2.5 rounded-2xl text-center">
+              <p className="text-[18px] font-bold text-[#004732]">{userProfile.petsFostered}</p>
+              <p className="text-[11px] text-[#404944] font-medium">Pets Fostered</p>
+            </div>
+            <div className="bg-[#ecf6f1] p-2.5 rounded-2xl text-center">
+              <p className="text-[18px] font-bold text-[#004732]">100%</p>
+              <p className="text-[11px] text-[#404944] font-medium">Response Rate</p>
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* Guest Mode Card */
+        <div className="bg-white rounded-3xl p-5 shadow-sm border border-[#e6f0eb] space-y-4">
+          <div className="flex items-center gap-3.5">
+            <div className="w-14 h-14 rounded-full bg-[#ecf6f1] text-[#004732] flex items-center justify-center flex-shrink-0 ring-4 ring-[#e6f0eb]">
+              <span className="material-symbols-outlined text-[28px]">person_outline</span>
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <h2 className="text-[17px] font-bold text-[#141d1a]">Browsing as Guest</h2>
+                <span className="text-[11px] font-semibold text-[#707973] bg-[#ecf6f1] px-2 py-0.5 rounded-full">
+                  No sign in required
+                </span>
+              </div>
+              <p className="text-[12px] text-[#404944] mt-0.5 leading-snug">
+                You can browse pets, view radar sightings, and contact emergency triage freely.
+              </p>
+            </div>
+          </div>
+
+          <div className="p-3 bg-[#f2fcf6] rounded-2xl border border-[#aff0d2]/40 text-[12px] text-[#29322e] space-y-1">
+            <p className="font-bold text-[#004732] flex items-center gap-1">
+              <span className="material-symbols-outlined text-[16px]">stars</span>
+              Optional perks when you sign in:
+            </p>
+            <p className="text-[#404944] pl-5">
+              Customize your profile picture, nickname, unique username, and earn rescuer verification badges.
             </p>
           </div>
-        </div>
 
-        {/* Rescuer Stats Bento */}
-        <div className="grid grid-cols-3 gap-2 pt-1 border-t border-[#f2fcf6]">
-          <div className="bg-[#ecf6f1] p-2.5 rounded-2xl text-center">
-            <p className="text-[18px] font-bold text-[#004732]">12</p>
-            <p className="text-[11px] text-[#404944] font-medium">Rescues Assisted</p>
-          </div>
-          <div className="bg-[#ecf6f1] p-2.5 rounded-2xl text-center">
-            <p className="text-[18px] font-bold text-[#004732]">4</p>
-            <p className="text-[11px] text-[#404944] font-medium">Pets Fostered</p>
-          </div>
-          <div className="bg-[#ecf6f1] p-2.5 rounded-2xl text-center">
-            <p className="text-[18px] font-bold text-[#004732]">100%</p>
-            <p className="text-[11px] text-[#404944] font-medium">Response Rate</p>
-          </div>
+          <button
+            type="button"
+            onClick={onOpenAuth}
+            className="w-full py-3 bg-[#004732] text-white rounded-2xl font-bold text-[14px] shadow-sm hover:bg-[#003827] active:scale-[0.99] transition-all cursor-pointer flex items-center justify-center gap-2"
+          >
+            <span className="material-symbols-outlined text-[18px]">login</span>
+            <span>Sign In or Create Account</span>
+          </button>
         </div>
-      </div>
+      )}
 
       {/* Foster Availability Switch */}
       <div className="bg-white rounded-3xl p-5 shadow-sm border border-[#e6f0eb] flex items-center justify-between gap-3">
@@ -121,6 +220,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           className={`w-12 h-7 rounded-full p-1 transition-colors cursor-pointer flex items-center ${
             fosterAvailable ? 'bg-[#004732]' : 'bg-[#dbe5e0]'
           }`}
+          aria-label="Toggle Foster Readiness"
         >
           <div
             className={`w-5 h-5 rounded-full bg-white shadow-md transform transition-transform ${
@@ -214,6 +314,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             className={`w-12 h-7 rounded-full p-1 transition-colors cursor-pointer flex items-center ${
               smsAlerts ? 'bg-[#004732]' : 'bg-[#dbe5e0]'
             }`}
+            aria-label="Toggle SMS for Critical SOS"
           >
             <div
               className={`w-5 h-5 rounded-full bg-white shadow-md transform transition-transform ${
@@ -261,3 +362,4 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     </div>
   );
 };
+

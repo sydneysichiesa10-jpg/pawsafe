@@ -1,8 +1,53 @@
-import { Pet, RadarSighting, EmergencyClinic } from '../types';
+import { Pet, RadarSighting, EmergencyClinic, UserProfile } from '../types';
 
 export const PAWSAFE_LOGO = "https://lh3.googleusercontent.com/aida-public/AB6AXuDK8_N-WZSl01MCAnJHApGp2iP3salCkmiQEFFyN2_hDRZYHRZbaDCBrsH9dge5mddoeUlZ6NHeaF3KBczuH90Fpcux_-9z6A5uVG7AymKGfhJMNuqPNqoGPo8qPvXAtDtfK3IXIVRnKLOzrfEzxMhryQpYH6-0rA9jPcNZauO2l1qkojfZYWMGt2wKfMIWf3SH1_ARz_7pQ1vMFibo7_0rU_CE-ii1n0S4B7gKj6OCEVC_RYBhSWWE";
 export const USER_AVATAR = "https://lh3.googleusercontent.com/aida-public/AB6AXuARmYRrOAavj9ZxsI1j3lDrZzRDlztKlWLdR4i33bPFJ4qYXg0d2z0JrTMGso_V05soimUfeSORTiR5jk9hy5SXdYh7l4nbtcSpLNvdNe2dPy8hxQXn9SQE4N76guGig8ntT4xU-ITwjYxfS_myp4pxLvI9yUDjTSDzd-EazMUzNJQM9ET4rheE5QQLAN3fS2xR-UnW6J4i1zrlZbenwVvGK0SYMMgSt_lb2pxPLU6kwyEuxoeogCm7";
 export const SHELTER_MAP_IMAGE = "https://lh3.googleusercontent.com/aida-public/AB6AXuA4E5N_-ZJ4RB0EOVlyMp2HPxPJ1-xYTQrGAoG9UF7XBuGyDXopGZ1gtvITYOyAJCK2Y5nuinY5ypKuu4ukLvzHRl-mN1FM5zkUVEzsLI7g9toAuf9cb-Mc9PfjWHK0gYdIvkSP3hmR3vSHTWJeNpYQ1jfXgGT1fYdM2Xz7UmdVL1aGFjd6dkVdZw5ppVheJaDqwwnJprnWZhZjnKIMzAO1nedstFUTdOMfaIr3_t5RI4dL-XLaMqEP";
+
+export const AVATAR_PRESETS = [
+  { id: '1', url: USER_AVATAR, label: 'Sydney' },
+  { id: '2', url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80', label: 'Maya' },
+  { id: '3', url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80', label: 'Rian' },
+  { id: '4', url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&q=80', label: 'Dewi' },
+  { id: '5', url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80', label: 'Budi' },
+  { id: '6', url: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=400&q=80', label: 'Sarah' },
+];
+
+export const DEFAULT_GUEST_PROFILE: UserProfile = {
+  id: 'guest',
+  isLoggedIn: false,
+  username: 'guest',
+  nickname: 'Guest',
+  fullName: 'Guest Rescuer',
+  email: '',
+  avatar: '',
+  bio: 'Animal lover exploring PawSafe rescue & adoption network.',
+  phone: '',
+  city: 'Jakarta (Selatan & Pusat)',
+  role: 'Animal Advocate',
+  rescuesAssisted: 0,
+  petsFostered: 0,
+  joinedDate: 'Browsing as Guest',
+};
+
+export const DEMO_RESCUER_PROFILE: UserProfile = {
+  id: 'user-sydney',
+  isLoggedIn: true,
+  username: 'sydney_rescuer',
+  nickname: 'Sydney',
+  fullName: 'Sydney Sichiesa',
+  email: 'sydneysichiesa10@gmail.com',
+  avatar: USER_AVATAR,
+  bio: 'Volunteer animal rescuer and emergency foster parent with PawSafe Indonesia.',
+  phone: '+62 812-8439-9102',
+  city: 'Jakarta (Selatan & Pusat)',
+  role: 'Volunteer Rescuer',
+  rescuesAssisted: 12,
+  petsFostered: 4,
+  joinedDate: 'Joined March 2026',
+};
+
+export const DEFAULT_USER_PROFILE: UserProfile = DEFAULT_GUEST_PROFILE;
 
 export const PETS_DATA: Pet[] = [
   {
