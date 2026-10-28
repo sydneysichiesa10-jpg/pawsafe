@@ -458,6 +458,34 @@ export const AdoptScreen: React.FC<AdoptScreenProps> = ({
           <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[#29322f]/40 to-transparent pointer-events-none" />
           <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[#29322f]/60 via-[#29322f]/20 to-transparent pointer-events-none" />
 
+          {/* Next / Previous Arrow Buttons */}
+          {selectedPet.photos.length > 1 && (
+            <>
+              <button
+                type="button"
+                aria-label="Previous photo angle"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentSlide((prev) => (prev > 0 ? prev - 1 : selectedPet.photos.length - 1));
+                }}
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center backdrop-blur-md transition-all active:scale-95 shadow-md z-10 cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[20px]">chevron_left</span>
+              </button>
+              <button
+                type="button"
+                aria-label="Next photo angle"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentSlide((prev) => (prev < selectedPet.photos.length - 1 ? prev + 1 : 0));
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center backdrop-blur-md transition-all active:scale-95 shadow-md z-10 cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[20px]">chevron_right</span>
+              </button>
+            </>
+          )}
+
           {/* Floating Badges Top */}
           <div className="absolute top-3.5 left-3.5 right-3.5 flex items-center justify-between pointer-events-none">
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 backdrop-blur-md shadow-sm">

@@ -50,12 +50,12 @@ export const DEMO_RESCUER_PROFILE: UserProfile = {
 export const DEFAULT_USER_PROFILE: UserProfile = DEFAULT_GUEST_PROFILE;
 
 export const SPECIES_FALLBACK_IMAGES: Record<string, string> = {
-  dog: 'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=800&q=80',
-  cat: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&w=800&q=80',
-  reptile: 'https://images.unsplash.com/photo-1563281577-a7be47e20db9?auto=format&fit=crop&w=800&q=80',
-  bird: 'https://images.unsplash.com/photo-1552728089-57bdde30beb3?auto=format&fit=crop&w=800&q=80',
-  'small-animal': 'https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?auto=format&fit=crop&w=800&q=80',
-  default: 'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=800&q=80',
+  dog: '/assets/barnaby_1.jpg',
+  cat: '/assets/cleo_1.jpg',
+  reptile: '/assets/pascal_1.jpg',
+  bird: '/assets/rio_1.jpg',
+  'small-animal': '/assets/boba_1.jpg',
+  default: '/assets/barnaby_1.jpg',
 };
 
 export const PETS_DATA: Pet[] = [
@@ -74,16 +74,14 @@ export const PETS_DATA: Pet[] = [
     badges: ['Ready for Home', 'Adoptable'],
     status: 'Ready for Home',
     photos: [
-      'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=1000&q=80',
-      'https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=1000&q=80',
-      'https://images.unsplash.com/photo-1587300003388-59208cc962cb?auto=format&fit=crop&w=1000&q=80',
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuAkManYdDt-TXJIjWXIZLXobnB8CJSYH-tf1XYGu3BUnsIO9S7NxmOoLiNetWtEqXVjKOL3O052CuzI9gYnzdvvfPZBlJC3c8CzVSjN1C8t26NpPb12TL4nGNUsdR7PwIvpOcpIKsKA01NyapVQnrGFyZpLa-gOK7U_0hmdvDFhiS1JYn7O-i54Mpy36g5rXtEjAOFk-JJvDjFmuixfkIVs7wy_-iV5FhGEmL2-_JySPhKj3xhRRu1g',
-      '/assets/aistudio/Image_1_2fec3635.jpeg',
+      '/assets/barnaby_1.jpg',
+      '/assets/barnaby_2.jpg',
+      '/assets/barnaby_3.jpg',
     ],
     photoAlts: [
-      'A joyful golden retriever mix named Barnaby panting happily in a sun-drenched park with soft warm natural lighting, amber backlight, and emerald green foliage.',
-      'Close up profile of a happy golden retriever mix dog with alert eyes, soft creamy amber fur, tilting head curiously on a rustic cozy shelter porch.',
-      'A friendly rescue golden retriever sitting patiently on a soft green lawn with a volunteer trainer, playful body language, wearing a teal fabric collar with brass tag.'
+      'A joyful golden retriever mix named Barnaby sitting happily in a sun-drenched park with warm golden fur.',
+      'Close up portrait of Barnaby with alert amber eyes and cheerful smiling expression.',
+      'Barnaby outdoors looking relaxed and content in soft natural lighting.'
     ],
     temperamentTags: [
       'Gentle Soul',
@@ -128,7 +126,7 @@ export const PETS_DATA: Pet[] = [
     id: 'cleo',
     name: 'Cleo',
     species: 'cat',
-    breed: 'Calico Domestic Shorthair',
+    breed: 'Tuxedo Domestic Shorthair',
     age: '1.8 Years',
     ageShort: '1.8 yrs',
     gender: 'Female',
@@ -139,14 +137,14 @@ export const PETS_DATA: Pet[] = [
     badges: ['Purr Machine', 'Adoptable'],
     status: 'Adoptable',
     photos: [
-      'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1533738363-b7f9aef128ce?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1573865526739-10659fec78a5?auto=format&fit=crop&w=800&q=80'
+      '/assets/cleo_1.jpg',
+      '/assets/cleo_2.jpg',
+      '/assets/cleo_3.jpg',
     ],
     photoAlts: [
-      'Curious green-eyed calico cat looking gently toward the camera on sunlit windowsill',
-      'Cute cat with glasses looking cozy and happy',
-      'Content indoor calico cat stretching on a warm plush blanket'
+      'Cleo the tuxedo cat sitting gracefully on a bamboo perch with alert green eyes.',
+      'Cleo relaxing calmly with sleek black and white coat on a natural bamboo branch.',
+      'Close-up portrait of Cleo with sweet curious expression and pristine white whiskers.'
     ],
     temperamentTags: [
       'Sweet Lap Warmer',
@@ -202,14 +200,14 @@ export const PETS_DATA: Pet[] = [
     badges: ['Gentle Lizard', 'Adoptable'],
     status: 'Adoptable',
     photos: [
-      'https://images.unsplash.com/photo-1563281577-a7be47e20db9?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1579380656108-328e4259b130?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1508873696983-2df5293cb325?auto=format&fit=crop&w=800&q=80'
+      '/assets/pascal_1.jpg',
+      '/assets/pascal_2.jpg',
+      '/assets/pascal_3.jpg',
     ],
     photoAlts: [
-      'Friendly bearded dragon with warm amber scales basking contentedly under natural light',
-      'Close-up of curious reptile tilting head calmly',
-      'Pascal sitting gently on a wooden basking log'
+      'Pascal the bearded dragon perched on a natural branch with textured amber scales.',
+      'Pascal basking calmly in warm natural sunlight with relaxed pose.',
+      'Close-up profile of Pascal displaying distinctive spiny beard and alert eyes.'
     ],
     temperamentTags: [
       'Docile & Friendly',
@@ -265,12 +263,14 @@ export const PETS_DATA: Pet[] = [
     badges: ['Hand-Tamed', 'Adoptable'],
     status: 'Adoptable',
     photos: [
-      'https://images.unsplash.com/photo-1552728089-57bdde30beb3?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1452570053594-1b985d6ea890?auto=format&fit=crop&w=800&q=80'
+      '/assets/rio_1.jpg',
+      '/assets/rio_2.jpg',
+      '/assets/rio_3.jpg',
     ],
     photoAlts: [
-      'Vibrant tropical green parakeet perched happily on a wooden branch with bright intelligent eyes',
-      'Colorful friendly bird stepping up to a volunteer finger'
+      'Rio the vibrant green conure parakeet perched on a mossy branch outdoors.',
+      'Rio showing detailed emerald and turquoise plumage in soft daylight.',
+      'Close-up of Rio with curious inquisitive eyes and bright curved beak.'
     ],
     temperamentTags: [
       'Hand-Tamed',
@@ -326,12 +326,14 @@ export const PETS_DATA: Pet[] = [
     badges: ['Gentle Herbivore', 'Adoptable'],
     status: 'Adoptable',
     photos: [
-      'https://images.unsplash.com/photo-1508455858334-95337ba25607?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1437622368342-7a3d73a34c8f?auto=format&fit=crop&w=800&q=80'
+      '/assets/bima_1.jpg',
+      '/assets/bima_2.jpg',
+      '/assets/bima_3.jpg',
     ],
     photoAlts: [
-      'Sturdy African spurred tortoise grazing happily in green lawn garden',
-      'Tortoise basking under bright morning sunshine'
+      'Bima the Sulcata tortoise grazing peacefully in a lush garden lawn.',
+      'Bima basking in morning sunshine with prominent grooved carapace ridges.',
+      'Front-facing portrait of Bima exploring the outdoor sanctuary grass.'
     ],
     temperamentTags: [
       'Gentle Giant',
@@ -376,7 +378,7 @@ export const PETS_DATA: Pet[] = [
     id: 'boba-miki',
     name: 'Boba & Miki',
     species: 'small-animal',
-    breed: 'Holland Lop Dwarf Bunnies',
+    breed: 'White Dwarf Bunny',
     age: '1.2 Years',
     ageShort: '1.2 yrs',
     gender: 'Female',
@@ -387,12 +389,14 @@ export const PETS_DATA: Pet[] = [
     badges: ['Bonded Duo', 'Adoptable'],
     status: 'Adoptable',
     photos: [
-      'https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1535268647677-300dbf3d78d1?auto=format&fit=crop&w=800&q=80'
+      '/assets/boba_1.jpg',
+      '/assets/boba_2.jpg',
+      '/assets/boba_3.jpg',
     ],
     photoAlts: [
-      'Pair of fluffy dwarf lop bunnies grooming each other on soft indoor carpet',
-      'Curious little bunny munching fresh timothy hay'
+      'Boba & Miki the fluffy white dwarf bunny resting peacefully in a fresh clover meadow.',
+      'Side view of the gentle white rescue bunny sniffing clover and green grass.',
+      'Close-up of the sweet bunny with soft pink ears and twitching nose.'
     ],
     temperamentTags: [
       'Litter Box Trained',
@@ -437,7 +441,7 @@ export const PETS_DATA: Pet[] = [
     id: 'milo-luna',
     name: 'Milo & Luna',
     species: 'dog',
-    breed: 'Bonded Pair (Beagle & Lab)',
+    breed: 'Friendly Beagle Pup',
     age: '3.0 Years',
     ageShort: '3 yrs',
     gender: 'Male',
@@ -448,12 +452,14 @@ export const PETS_DATA: Pet[] = [
     badges: ['Bonded Pair', 'Adoptable'],
     status: 'Adoptable',
     photos: [
-      'https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1534361960057-19889db9621e?auto=format&fit=crop&w=800&q=80'
+      '/assets/milo_1.jpg',
+      '/assets/milo_2.jpg',
+      '/assets/milo_3.jpg',
     ],
     photoAlts: [
-      'Two cheerful dogs lying side-by-side on the grass outdoors, smiling into camera',
-      'Playful beagle and lab mix romping happily in a fenced yard'
+      'Milo the happy tricolor beagle hound smiling warmly in a grassy yard.',
+      'Milo trotting happily outdoors with floppy hound ears and cheerful expression.',
+      'Close-up portrait of Milo with soft soulful eyes and classic tricolor markings.'
     ],
     temperamentTags: [
       'Inseparable Best Friends',
@@ -508,12 +514,14 @@ export const PETS_DATA: Pet[] = [
     badges: ['Puppy', 'Adoptable'],
     status: 'Adoptable',
     photos: [
-      'https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1546527868-ccb7ee7dfa6a?auto=format&fit=crop&w=800&q=80'
+      '/assets/rosie_1.jpg',
+      '/assets/rosie_2.jpg',
+      '/assets/rosie_3.jpg',
     ],
     photoAlts: [
-      'Rosie the puppy tilting her head with big expressive ears and warm hazel eyes',
-      'Puppy running with a rubber chew toy on sunlit lawn'
+      'Rosie the corgi pup sitting proudly with upright bat ears and warm ginger coat.',
+      'Rosie looking up playfully with bright sparkling puppy eyes.',
+      'Close-up of Rosie with happy open-mouth puppy grin.'
     ],
     temperamentTags: [
       'Curious Explorer',
@@ -557,7 +565,7 @@ export const PETS_DATA: Pet[] = [
     id: 'pip',
     name: 'Pip',
     species: 'dog',
-    breed: 'Terrier & Local Mix',
+    breed: 'Frenchie & Terrier Mix (Mockup Hero Pup)',
     age: '1.1 Years',
     ageShort: '1 yr',
     gender: 'Male',
@@ -568,12 +576,14 @@ export const PETS_DATA: Pet[] = [
     badges: ['Foster-to-Adopt', 'Pocket Sized'],
     status: 'In Foster',
     photos: [
-      'https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?auto=format&fit=crop&w=800&q=80'
+      '/assets/pip_1.jpg',
+      '/assets/pip_2.jpg',
+      '/assets/pip_3.jpg',
     ],
     photoAlts: [
-      'Tiny scruffy terrier with inquisitive eyes wrapped in a cozy sweater',
-      'Pip relaxing on a sofa cushion looking content'
+      'Pip wearing a bright yellow hoodie sweater looking affectionately at the camera.',
+      'Pip sitting cozy in his yellow knit hoodie in a warm indoor setting.',
+      'Close-up of Pip with expressive brown eyes and folded soft ears.'
     ],
     temperamentTags: [
       'Lap Warmer',
