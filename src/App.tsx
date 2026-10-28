@@ -23,8 +23,9 @@ import { AuthModal } from './components/modals/AuthModal';
 import { EditProfileModal } from './components/modals/EditProfileModal';
 
 export default function App() {
-  const [currentTab, setCurrentTab] = useState<NavTab>('adopt');
-  const [selectedPet, setSelectedPet] = useState<Pet>(PETS_DATA[0]); // Barnaby
+  const [currentTab, setCurrentTab] = useState<NavTab>('radar');
+  const [selectedPet, setSelectedPet] = useState<Pet>(() => PETS_DATA.find((p) => p.id !== 'barnaby') || PETS_DATA[1] || PETS_DATA[0]);
+  const [adoptViewMode, setAdoptViewMode] = useState<'catalog' | 'detail'>('catalog');
   // Saved / Favorited pets (defaults to empty when logged out / initial guest)
   const [favorites, setFavorites] = useState<string[]>(() => {
     try {
@@ -181,6 +182,8 @@ export default function App() {
             <AdoptScreen
               selectedPet={selectedPet}
               onSelectPet={setSelectedPet}
+              viewMode={adoptViewMode}
+              onViewModeChange={setAdoptViewMode}
               favorites={favorites}
               onToggleFavorite={toggleFavorite}
               onOpenApply={(pet) => setApplyPet(pet)}
@@ -221,19 +224,38 @@ export default function App() {
               onOpenEditProfile={() => setIsEditProfileModalOpen(true)}
               onLogout={handleLogout}
               favorites={favorites}
-              onSelectPet={setSelectedPet}
-              onNavigateToAdopt={() => setCurrentTab('adopt')}
+              onSelectPet={(pet) => {
+                setSelectedPet(pet);
+                setAdoptViewMode('detail');
+                setCurrentTab('adopt');
+              }}
+              onNavigateToAdopt={() => {
+                setAdoptViewMode('catalog');
+                setCurrentTab('adopt');
+              }}
               currentLocation={currentLocation}
             />
           )}
         </main>
 
         {/* Floating Bottom Navigation */}
-        <BottomNav currentTab={currentTab} onTabChange={setCurrentTab} />
+        <BottomNav
+          currentTab={currentTab}
+          onTabChange={(tab) => {
+            setCurrentTab(tab);
+            if (tab === 'adopt') {
+              setAdoptViewMode('catalog');
+            }
+          }}
+        />
 
         {/* Modals & Dialogs */}
         {applyPet && (
-          <ApplyModal pet={applyPet} onClose={() => setApplyPet(null)} />
+          <ApplyModal
+            pet={applyPet}
+            userProfile={userProfile}
+            onClose={() => setApplyPet(null)}
+          />
         )}
 
         {schedulePet && (
@@ -243,6 +265,7 @@ export default function App() {
         {coordinatorPet && (
           <CoordinatorModal
             pet={coordinatorPet}
+            userProfile={userProfile}
             onClose={() => setCoordinatorPet(null)}
           />
         )}

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { RadarSighting } from '../types';
-import { RADAR_SIGHTINGS } from '../data/mockData';
+import { RADAR_SIGHTINGS, SPECIES_FALLBACK_IMAGES } from '../data/mockData';
 
 interface RadarScreenProps {
   onOpenReport: () => void;

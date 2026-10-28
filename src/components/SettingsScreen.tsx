@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PETS_DATA } from '../data/mockData';
+import { PETS_DATA, SPECIES_FALLBACK_IMAGES } from '../data/mockData';
 import { Pet, UserProfile } from '../types';
 
 interface SettingsScreenProps {
@@ -267,7 +267,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                 <img
                   src={pet.photos[0]}
                   alt={pet.name}
-                  className="w-12 h-12 rounded-xl object-cover shadow-sm group-hover:scale-105 transition-transform"
+                  onError={(e) => {
+                    e.currentTarget.src = SPECIES_FALLBACK_IMAGES[pet.species] || SPECIES_FALLBACK_IMAGES.default;
+                  }}
+                  className="w-12 h-12 rounded-xl object-cover shadow-sm group-hover:scale-105 transition-transform bg-[#e0eae5]"
                 />
                 <div className="min-w-0">
                   <h4 className="text-[13px] font-bold text-[#141d1a] truncate">{pet.name}</h4>

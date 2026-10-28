@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
-import { Pet } from '../../types';
+import { Pet, UserProfile } from '../../types';
 
 interface ApplyModalProps {
   pet: Pet;
+  userProfile?: UserProfile;
   onClose: () => void;
 }
 
-export const ApplyModal: React.FC<ApplyModalProps> = ({ pet, onClose }) => {
+export const ApplyModal: React.FC<ApplyModalProps> = ({ pet, userProfile, onClose }) => {
   const [step, setStep] = useState(1);
-  const [fullName, setFullName] = useState('Sydney Sichiesa');
-  const [email, setEmail] = useState('sydneysichiesa10@gmail.com');
-  const [phone, setPhone] = useState('+62 812-8439-9102');
+  const [fullName, setFullName] = useState(userProfile?.isLoggedIn ? userProfile.fullName : '');
+  const [email, setEmail] = useState(userProfile?.isLoggedIn ? userProfile.email : '');
+  const [phone, setPhone] = useState(userProfile?.isLoggedIn ? userProfile.phone : '');
   const [housingType, setHousingType] = useState('House with Fenced Yard');
   const [hasPets, setHasPets] = useState('Yes, 1 friendly dog');
   const [hoursAlone, setHoursAlone] = useState('2-4 hours');

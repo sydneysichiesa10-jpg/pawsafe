@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Pet } from '../types';
-import { PETS_DATA } from '../data/mockData';
+import { PETS_DATA, SPECIES_FALLBACK_IMAGES } from '../data/mockData';
 
 interface AdoptScreenProps {
   selectedPet: Pet;
   onSelectPet: (pet: Pet) => void;
+  viewMode?: 'catalog' | 'detail';
+  onViewModeChange?: (mode: 'catalog' | 'detail') => void;
   favorites: string[];
   onToggleFavorite: (petId: string) => void;
   onOpenApply: (pet: Pet) => void;
@@ -14,9 +16,13 @@ interface AdoptScreenProps {
   onCallPhone: (phone: string) => void;
 }
 
+type CategoryFilter = 'All' | 'Dogs' | 'Cats' | 'Reptiles' | 'Birds & Small' | 'In Foster';
+
 export const AdoptScreen: React.FC<AdoptScreenProps> = ({
   selectedPet,
   onSelectPet,
+  viewMode: controlledViewMode,
+  onViewModeChange,
   favorites,
   onToggleFavorite,
   onOpenApply,
@@ -25,12 +31,27 @@ export const AdoptScreen: React.FC<AdoptScreenProps> = ({
   onOpenDirections,
   onCallPhone,
 }) => {
+  // Internal viewMode state if not controlled from parent
+  const [internalViewMode, setInternalViewMode] = useState<'catalog' | 'detail'>('catalog');
+  const viewMode = controlledViewMode ?? internalViewMode;
+
+  const setViewMode = (mode: 'catalog' | 'detail') => {
+    if (onViewModeChange) {
+      onViewModeChange(mode);
+    } else {
+      setInternalViewMode(mode);
+    }
+  };
+
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [showAllPetsView, setShowAllPetsView] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  type CategoryFilter = 'All' | 'Dogs' | 'Cats' | 'Reptiles' | 'Birds & Small' | 'In Foster';
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>('All');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Reset slide when selected pet changes
+  useEffect(() => {
+    setCurrentSlide(0);
+  }, [selectedPet.id]);
 
   const isFav = favorites.includes(selectedPet.id);
 
@@ -39,7 +60,7 @@ export const AdoptScreen: React.FC<AdoptScreenProps> = ({
       try {
         await navigator.share({
           title: `Adopt ${selectedPet.name} on PawSafe`,
-          text: `Meet ${selectedPet.name}! A ${selectedPet.ageShort} sweet ${selectedPet.breed} ready for a loving home.`,
+          text: `Meet ${selectedPet.name}! A ${selectedPet.ageShort} sweet ${selectedPet.breed} ready for a loving home in ${selectedPet.location}.`,
           url: window.location.href,
         });
       } catch {
@@ -52,11 +73,16 @@ export const AdoptScreen: React.FC<AdoptScreenProps> = ({
     }
   };
 
+  const getFallbackImage = (species: string) => {
+    return SPECIES_FALLBACK_IMAGES[species] || SPECIES_FALLBACK_IMAGES.default;
+  };
+
   const filteredPets = PETS_DATA.filter((pet) => {
     const matchesSearch =
       pet.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       pet.breed.toLowerCase().includes(searchQuery.toLowerCase()) ||
       pet.species.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      pet.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
       pet.temperamentTags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()));
 
     if (activeCategory === 'All') return matchesSearch;
@@ -68,144 +94,293 @@ export const AdoptScreen: React.FC<AdoptScreenProps> = ({
     return matchesSearch;
   });
 
-  // If "Browse All Adoptable Pets" mode is active
-  if (showAllPetsView) {
+  const categories: { label: CategoryFilter; icon: string; count: number }[] = [
+    { label: 'All', icon: 'pets', count: PETS_DATA.length },
+    { label: 'Dogs', icon: 'sound_detection_dog_barking', count: PETS_DATA.filter((p) => p.species === 'dog').length },
+    { label: 'Cats', icon: 'cruelty_free', count: PETS_DATA.filter((p) => p.species === 'cat').length },
+    { label: 'Reptiles', icon: 'pest_control', count: PETS_DATA.filter((p) => p.species === 'reptile').length },
+    { label: 'Birds & Small', icon: 'flutter', count: PETS_DATA.filter((p) => p.species === 'bird' || p.species === 'small-animal').length },
+    { label: 'In Foster', icon: 'home', count: PETS_DATA.filter((p) => p.status === 'In Foster').length },
+  ];
+
+  /* =========================================================
+     VIEW MODE 1: ADOPTABLE PETS CATALOG (Default)
+     ========================================================= */
+  if (viewMode === 'catalog') {
     return (
-      <div className="flex flex-col w-full px-4 sm:px-5 pt-3 pb-32 animate-fadeIn">
-        {/* Back header */}
-        <div className="flex items-center justify-between pb-3">
-          <button
-            onClick={() => setShowAllPetsView(false)}
-            className="flex items-center gap-1.5 py-1.5 px-3 rounded-full bg-[#ecf6f1] text-[#004732] hover:bg-[#e6f0eb] transition-all active:scale-95 shadow-sm cursor-pointer"
-            type="button"
-          >
-            <span className="material-symbols-outlined text-[18px]">arrow_back</span>
-            <span className="text-[13px] font-semibold">Back to {selectedPet.name}</span>
-          </button>
-          <span className="text-[13px] text-[#404944] font-medium">
-            {filteredPets.length} adoptable pets nearby
-          </span>
+      <div className="flex flex-col w-full px-4 sm:px-5 pt-3 pb-32 animate-fadeIn max-w-md mx-auto">
+        {/* Toast notification */}
+        {toastMessage && (
+          <div className="fixed top-20 inset-x-4 max-w-sm mx-auto z-50 bg-[#004732] text-white px-4 py-2.5 rounded-full shadow-lg text-[13px] font-semibold text-center animate-bounce">
+            {toastMessage}
+          </div>
+        )}
+
+        {/* Catalog Header Banner */}
+        <div className="mb-3.5 space-y-1">
+          <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#004732] tracking-wide uppercase">
+            <span className="w-2 h-2 rounded-full bg-[#004732] animate-pulse" />
+            PawSafe Rescue Network Indonesia
+          </div>
+          <h1 className="text-[24px] sm:text-[26px] font-extrabold text-[#141d1a] tracking-tight leading-tight">
+            Adopt a Rescue Pet
+          </h1>
+          <p className="text-[13px] text-[#404944] leading-snug">
+            {PETS_DATA.length} rescued companions ready for foster or forever adoption in Jakarta, Bandung, Bali &amp; Yogyakarta.
+          </p>
         </div>
 
-        {/* Search input */}
+        {/* Search Bar */}
         <div className="relative mb-3">
           <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[20px] text-[#707973]">
             search
           </span>
           <input
             type="text"
-            placeholder="Search by breed, name, or vibe..."
+            placeholder="Search by breed, name, city, or vibe..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-11 pl-10 pr-4 rounded-2xl bg-white border border-[#dbe5e0] focus:border-[#004732] focus:ring-1 focus:ring-[#004732] text-[14px] text-[#141d1a] placeholder-[#707973] outline-none shadow-sm"
+            className="w-full h-11 pl-10 pr-10 rounded-2xl bg-white border border-[#dbe5e0] focus:border-[#004732] focus:ring-1 focus:ring-[#004732] text-[14px] text-[#141d1a] placeholder-[#707973] outline-none shadow-sm transition-all"
           />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#707973] hover:text-[#141d1a] text-[16px] cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-[18px]">cancel</span>
+            </button>
+          )}
         </div>
 
-        {/* Filter categories */}
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-2 mb-3">
-          {(['All', 'Dogs', 'Cats', 'Reptiles', 'Birds & Small', 'In Foster'] as const).map((cat) => (
+        {/* Filter Categories Chips */}
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2 mb-3">
+          {categories.map((cat) => (
             <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={`px-3 py-1.5 rounded-full text-[12px] font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                activeCategory === cat
+              key={cat.label}
+              onClick={() => setActiveCategory(cat.label)}
+              className={`px-3 py-1.5 rounded-full text-[12px] font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
+                activeCategory === cat.label
                   ? 'bg-[#004732] text-white shadow-sm'
-                  : 'bg-white text-[#404944] hover:bg-[#ecf6f1]'
+                  : 'bg-white text-[#404944] hover:bg-[#ecf6f1] border border-[#e6f0eb]'
               }`}
             >
-              {cat}
+              <span>{cat.label}</span>
+              <span
+                className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                  activeCategory === cat.label
+                    ? 'bg-white/20 text-white'
+                    : 'bg-[#ecf6f1] text-[#004732]'
+                }`}
+              >
+                {cat.count}
+              </span>
             </button>
           ))}
         </div>
 
-        {/* Pets Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {filteredPets.map((pet) => {
-            const petFav = favorites.includes(pet.id);
-            return (
-              <div
-                key={pet.id}
-                onClick={() => {
-                  onSelectPet(pet);
-                  setShowAllPetsView(false);
-                  setCurrentSlide(0);
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-                className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer group border border-[#e6f0eb]/70"
-              >
-                <div className="h-48 relative overflow-hidden bg-[#e0eae5]">
+        {/* Featured Pet Spotlight Card (Cleo - not Barnaby) */}
+        {activeCategory === 'All' && !searchQuery && (() => {
+          const featuredRescuePet = PETS_DATA.find((p) => p.id === 'cleo') || PETS_DATA.find((p) => p.id !== 'barnaby') || PETS_DATA[1];
+          return (
+            <div
+              onClick={() => {
+                onSelectPet(featuredRescuePet);
+                setViewMode('detail');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="mb-4 bg-gradient-to-br from-[#004732] to-[#1e5f48] rounded-[26px] p-4 text-white shadow-md cursor-pointer group hover:shadow-lg transition-all relative overflow-hidden"
+            >
+              <div className="flex items-center gap-3 relative z-10">
+                <div className="w-20 h-20 sm:w-22 sm:h-22 rounded-2xl overflow-hidden flex-shrink-0 bg-white/10 ring-2 ring-white/30 shadow-inner">
                   <img
-                    src={pet.photos[0]}
-                    alt={pet.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
-                    <span className="px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-md text-[11px] font-bold text-[#004732] shadow-sm flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#004732] animate-pulse" />
-                      {pet.badges[0]}
-                    </span>
-                  </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onToggleFavorite(pet.id);
+                    src={featuredRescuePet.photos[0]}
+                    alt={featuredRescuePet.name}
+                    onError={(e) => {
+                      e.currentTarget.src = getFallbackImage(featuredRescuePet.species);
                     }}
-                    className="absolute top-2.5 right-2.5 w-9 h-9 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center text-[#404944] hover:text-[#a13e28] transition-colors shadow-sm cursor-pointer"
-                  >
-                    <span className={`material-symbols-outlined text-[18px] ${petFav ? 'icon-filled text-[#a13e28]' : ''}`}>
-                      favorite
-                    </span>
-                  </button>
-                  <div className="absolute bottom-2.5 left-3 right-3 text-white drop-shadow-sm">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-[20px] font-bold leading-tight">{pet.name}</h3>
-                      <span className="text-[12px] font-semibold bg-[#004732]/80 backdrop-blur-md px-2 py-0.5 rounded-full">
-                        {pet.ageShort}
-                      </span>
-                    </div>
-                  </div>
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
                 </div>
-
-                <div className="p-4 space-y-2.5">
-                  <div className="flex items-center justify-between text-[13px] text-[#404944]">
-                    <span className="font-medium text-[#141d1a]">{pet.breed}</span>
-                    <span className="text-[12px] flex items-center gap-1 text-[#707973]">
-                      <span className="material-symbols-outlined text-[14px] text-[#004732]">location_on</span>
-                      {pet.shelter.campus}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <span className="px-2 py-0.5 rounded-full bg-white/20 text-white text-[10px] font-bold tracking-wide uppercase">
+                      ⭐ Featured Rescue
                     </span>
+                    <span className="text-[11px] text-white/80">{featuredRescuePet.ageShort}</span>
                   </div>
-
-                  <div className="flex flex-wrap gap-1">
-                    {pet.temperamentTags.slice(0, 3).map((tag, i) => (
-                      <span
-                        key={i}
-                        className="px-2 py-0.5 rounded-full bg-[#ecf6f1] text-[#09513b] text-[11px] font-medium"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-
-                  <div className="pt-1 flex items-center justify-between border-t border-[#f2fcf6]">
-                    <span className="text-[12px] font-bold text-[#004732]">
-                      Fee: {pet.shelter.fee.includes('(') ? pet.shelter.fee.split('(')[0].trim() : pet.shelter.fee}
+                  <h3 className="text-[18px] font-bold leading-tight">{featuredRescuePet.name}</h3>
+                  <p className="text-[12px] text-white/80 truncate mt-0.5">
+                    {featuredRescuePet.breed} • {featuredRescuePet.shelter.campus}
+                  </p>
+                  <div className="mt-2 flex items-center justify-between">
+                    <span className="text-[11px] font-semibold text-[#aff0d2]">
+                      {featuredRescuePet.badges[0]}
                     </span>
-                    <span className="text-[12px] font-semibold text-[#004732] flex items-center gap-0.5 group-hover:translate-x-1 transition-transform">
-                      View Profile
+                    <span className="text-[12px] font-bold text-white flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                      Meet {featuredRescuePet.name}
                       <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
                     </span>
                   </div>
                 </div>
               </div>
-            );
-          })}
+            </div>
+          );
+        })()}
+
+        {/* Results Counter & View Toggle Notice */}
+        <div className="flex items-center justify-between pb-2">
+          <span className="text-[13px] font-bold text-[#141d1a]">
+            {filteredPets.length} {filteredPets.length === 1 ? 'Pet' : 'Pets'} Available
+          </span>
+          <span className="text-[11px] text-[#707973]">
+            Tap any pet to view health passport &amp; apply
+          </span>
         </div>
+
+        {/* Adoptable Pets Grid */}
+        {filteredPets.length === 0 ? (
+          <div className="py-12 text-center bg-white rounded-3xl p-6 border border-[#e6f0eb] space-y-3">
+            <span className="material-symbols-outlined text-[42px] text-[#707973]">search_off</span>
+            <h3 className="text-[16px] font-bold text-[#141d1a]">No matching pets found</h3>
+            <p className="text-[13px] text-[#404944]">
+              Try searching for a different breed, location, or change your category filter.
+            </p>
+            <button
+              onClick={() => {
+                setSearchQuery('');
+                setActiveCategory('All');
+              }}
+              className="px-4 py-2 rounded-full bg-[#ecf6f1] text-[#004732] text-[13px] font-bold hover:bg-[#e6f0eb] cursor-pointer"
+            >
+              Reset Filters
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-3.5">
+            {filteredPets.map((pet) => {
+              const petFav = favorites.includes(pet.id);
+              return (
+                <div
+                  key={pet.id}
+                  onClick={() => {
+                    onSelectPet(pet);
+                    setViewMode('detail');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="bg-white rounded-[26px] overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer group border border-[#e6f0eb] hover:border-[#aff0d2]/70"
+                >
+                  {/* Photo Container */}
+                  <div className="h-52 relative overflow-hidden bg-[#e0eae5]">
+                    <img
+                      src={pet.photos[0]}
+                      alt={pet.name}
+                      onError={(e) => {
+                        e.currentTarget.src = getFallbackImage(pet.species);
+                      }}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+
+                    {/* Top Status Badge */}
+                    <div className="absolute top-3 left-3 flex items-center gap-1.5">
+                      <span className="px-2.5 py-1 rounded-full bg-white/95 backdrop-blur-md text-[11px] font-bold text-[#004732] shadow-sm flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#004732] animate-pulse" />
+                        {pet.badges[0] || 'Adoptable'}
+                      </span>
+                    </div>
+
+                    {/* Favorite Heart Button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleFavorite(pet.id);
+                      }}
+                      aria-label="Save to favorites"
+                      className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/95 backdrop-blur-md flex items-center justify-center text-[#404944] hover:text-[#a13e28] transition-colors shadow-sm cursor-pointer active:scale-90"
+                    >
+                      <span
+                        className={`material-symbols-outlined text-[19px] transition-transform ${
+                          petFav ? 'icon-filled text-[#a13e28] scale-110' : ''
+                        }`}
+                      >
+                        favorite
+                      </span>
+                    </button>
+
+                    {/* Gradient Overlay for bottom text legibility */}
+                    <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/75 via-black/30 to-transparent pointer-events-none" />
+
+                    {/* Bottom identity preview */}
+                    <div className="absolute bottom-3 left-3.5 right-3.5 text-white">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-[22px] font-bold leading-tight drop-shadow-sm">
+                            {pet.name}
+                          </h3>
+                          <span className="text-[11px] font-bold bg-[#aff0d2] text-[#002115] px-2 py-0.5 rounded-full shadow-sm">
+                            {pet.ageShort} • {pet.gender}
+                          </span>
+                        </div>
+                        <span className="text-[12px] font-semibold bg-black/40 backdrop-blur-md px-2.5 py-0.5 rounded-full text-white/90">
+                          {pet.species.toUpperCase()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Card Content Info */}
+                  <div className="p-4 space-y-2.5">
+                    <div className="flex items-center justify-between text-[13px]">
+                      <span className="font-bold text-[#141d1a] truncate max-w-[200px]">
+                        {pet.breed}
+                      </span>
+                      <span className="text-[12px] flex items-center gap-1 text-[#404944] font-medium truncate max-w-[150px]">
+                        <span className="material-symbols-outlined text-[14px] text-[#004732]">
+                          location_on
+                        </span>
+                        {pet.location.split(',')[0]}
+                      </span>
+                    </div>
+
+                    {/* Temperament Tags */}
+                    <div className="flex flex-wrap gap-1">
+                      {pet.temperamentTags.slice(0, 3).map((tag, i) => (
+                        <span
+                          key={i}
+                          className="px-2.5 py-0.5 rounded-full bg-[#ecf6f1] text-[#09513b] text-[11px] font-medium"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* Bottom CTA & Fee Row */}
+                    <div className="pt-2 flex items-center justify-between border-t border-[#f2fcf6]">
+                      <div>
+                        <span className="text-[11px] text-[#707973] block leading-none">Adoption Fee</span>
+                        <span className="text-[13px] font-bold text-[#004732]">
+                          {pet.shelter.fee.includes('(') ? pet.shelter.fee.split('(')[0].trim() : pet.shelter.fee}
+                        </span>
+                      </div>
+                      <span className="text-[13px] font-bold text-[#004732] flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                        View Profile &amp; Story
+                        <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     );
   }
 
+  /* =========================================================
+     VIEW MODE 2: PET DETAIL SCREEN (Full profile & Roadmap)
+     ========================================================= */
   return (
-    <div className="flex flex-col w-full pb-28">
+    <div className="flex flex-col w-full pb-28 animate-fadeIn">
       {/* Toast notification */}
       {toastMessage && (
         <div className="fixed top-20 inset-x-4 max-w-sm mx-auto z-50 bg-[#004732] text-white px-4 py-2.5 rounded-full shadow-lg text-[13px] font-semibold text-center animate-bounce">
@@ -213,15 +388,18 @@ export const AdoptScreen: React.FC<AdoptScreenProps> = ({
         </div>
       )}
 
-      {/* Interactive Bar / Nav Header */}
+      {/* Interactive Top Nav Header */}
       <div className="px-4 sm:px-5 pt-2 pb-3 flex items-center justify-between max-w-md mx-auto w-full">
         <button
-          onClick={() => setShowAllPetsView(true)}
+          onClick={() => {
+            setViewMode('catalog');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
           className="flex items-center gap-1.5 py-1.5 px-3 rounded-full bg-[#ecf6f1] text-[#004732] hover:bg-[#e6f0eb] transition-all active:scale-95 shadow-sm cursor-pointer"
           type="button"
         >
           <span className="material-symbols-outlined text-[18px]">arrow_back</span>
-          <span className="text-[13px] font-semibold">Adopt Pets</span>
+          <span className="text-[13px] font-semibold">Adoptable Pets</span>
         </button>
 
         <div className="flex items-center gap-2">
@@ -268,6 +446,9 @@ export const AdoptScreen: React.FC<AdoptScreenProps> = ({
                   className="w-full h-full object-cover"
                   alt={selectedPet.photoAlts[idx] || `${selectedPet.name} photo ${idx + 1}`}
                   src={photoUrl}
+                  onError={(e) => {
+                    e.currentTarget.src = getFallbackImage(selectedPet.species);
+                  }}
                 />
               </div>
             ))}
@@ -314,18 +495,20 @@ export const AdoptScreen: React.FC<AdoptScreenProps> = ({
             </div>
 
             {/* Carousel Dots */}
-            <div className="flex items-center gap-1.5 bg-[#29322f]/40 backdrop-blur-md px-2.5 py-1.5 rounded-full">
-              {selectedPet.photos.map((_, idx) => (
-                <button
-                  key={idx}
-                  aria-label={`Photo ${idx + 1}`}
-                  onClick={() => setCurrentSlide(idx)}
-                  className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
-                    currentSlide === idx ? 'bg-white w-4' : 'bg-white/40 w-2'
-                  }`}
-                />
-              ))}
-            </div>
+            {selectedPet.photos.length > 1 && (
+              <div className="flex items-center gap-1.5 bg-[#29322f]/40 backdrop-blur-md px-2.5 py-1.5 rounded-full">
+                {selectedPet.photos.map((_, idx) => (
+                  <button
+                    key={idx}
+                    aria-label={`Photo ${idx + 1}`}
+                    onClick={() => setCurrentSlide(idx)}
+                    className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                      currentSlide === idx ? 'bg-white w-4' : 'bg-white/40 w-2'
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -384,7 +567,6 @@ export const AdoptScreen: React.FC<AdoptScreenProps> = ({
           </div>
           <div className="flex flex-wrap gap-1.5">
             {selectedPet.temperamentTags.map((tag, idx) => {
-              // Highlight certain tags with custom colors
               let bgStyle = "bg-[#e6f0eb] text-[#141d1a]";
               let iconName = "favorite";
               if (tag === 'Gentle Soul') {
@@ -639,9 +821,12 @@ export const AdoptScreen: React.FC<AdoptScreenProps> = ({
               </h2>
             </div>
             <button
-              onClick={() => setShowAllPetsView(true)}
+              onClick={() => {
+                setViewMode('catalog');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
               type="button"
-              className="text-[11px] text-[#004732] font-bold hover:underline flex items-center gap-0.5 cursor-pointer"
+              className="text-[12px] text-[#004732] font-bold hover:underline flex items-center gap-0.5 cursor-pointer"
             >
               <span>View All</span>
               <span className="material-symbols-outlined text-[16px]">chevron_right</span>
@@ -649,7 +834,7 @@ export const AdoptScreen: React.FC<AdoptScreenProps> = ({
           </div>
 
           <p className="text-[13px] text-[#404944]">
-            Looking for another companion or friend for {selectedPet.name}? Meet other rescue animals (dogs, cats, reptiles &amp; birds) nearby:
+            Looking for another companion or friend for {selectedPet.name}? Meet other rescue animals nearby:
           </p>
 
           <div className="grid grid-cols-4 gap-2 pt-1">
@@ -665,10 +850,13 @@ export const AdoptScreen: React.FC<AdoptScreenProps> = ({
                   }}
                   className="bg-[#ecf6f1] rounded-2xl p-2.5 flex flex-col items-center text-center group cursor-pointer hover:bg-[#e6f0eb] transition-all active:scale-95"
                 >
-                  <div className="w-14 h-14 rounded-full overflow-hidden mb-1.5 ring-2 ring-[#004732]/20 shadow-sm">
+                  <div className="w-14 h-14 rounded-full overflow-hidden mb-1.5 ring-2 ring-[#004732]/20 shadow-sm bg-[#e0eae5]">
                     <img
                       src={pal.photos[0]}
                       alt={pal.name}
+                      onError={(e) => {
+                        e.currentTarget.src = getFallbackImage(pal.species);
+                      }}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                     />
                   </div>
@@ -678,11 +866,13 @@ export const AdoptScreen: React.FC<AdoptScreenProps> = ({
                   <span className="text-[11px] text-[#404944] truncate w-full">
                     {pal.badges[0]}
                   </span>
-                  <span className={`mt-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
-                    pal.status === 'In Foster'
-                      ? 'bg-[#ffdad2] text-[#822714]'
-                      : 'bg-[#aff0d2] text-[#002115]'
-                  }`}>
+                  <span
+                    className={`mt-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                      pal.status === 'In Foster'
+                        ? 'bg-[#ffdad2] text-[#822714]'
+                        : 'bg-[#aff0d2] text-[#002115]'
+                    }`}
+                  >
                     {pal.status === 'In Foster' ? 'Foster' : 'Adoptable'}
                   </span>
                 </div>

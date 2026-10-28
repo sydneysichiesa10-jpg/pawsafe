@@ -1,16 +1,22 @@
 import React, { useState } from 'react';
-import { Pet } from '../../types';
+import { Pet, UserProfile } from '../../types';
 
 interface CoordinatorModalProps {
   pet: Pet;
+  userProfile?: UserProfile;
   onClose: () => void;
 }
 
-export const CoordinatorModal: React.FC<CoordinatorModalProps> = ({ pet, onClose }) => {
+export const CoordinatorModal: React.FC<CoordinatorModalProps> = ({ pet, userProfile, onClose }) => {
+  // If user is logged in, greet them by their username (or nickname); if not logged in, greet as Guest
+  const recipientName = userProfile?.isLoggedIn
+    ? (userProfile.username || userProfile.nickname || userProfile.fullName || 'Guest')
+    : 'Guest';
+
   const [messages, setMessages] = useState<Array<{ sender: 'coordinator' | 'user'; text: string; time: string }>>([
     {
       sender: 'coordinator',
-      text: `Hi Sydney! I'm ${pet.shelter.coordinator}, adoption coordinator at ${pet.shelter.name}. How can I help you with ${pet.name} today?`,
+      text: `Hi ${recipientName}! I'm ${pet.shelter.coordinator}, adoption coordinator at ${pet.shelter.name}. How can I help you with ${pet.name} today?`,
       time: '10:14 AM',
     },
   ]);
@@ -59,7 +65,7 @@ export const CoordinatorModal: React.FC<CoordinatorModalProps> = ({ pet, onClose
         <div className="flex items-center justify-between pb-3 border-b border-[#f2fcf6]">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-[#aff0d2] text-[#004732] font-bold flex items-center justify-center text-[15px]">
-              SJ
+              {pet.shelter.coordinator.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'CP'}
             </div>
             <div>
               <div className="flex items-center gap-1.5">

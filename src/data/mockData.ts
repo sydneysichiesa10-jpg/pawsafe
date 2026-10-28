@@ -49,6 +49,15 @@ export const DEMO_RESCUER_PROFILE: UserProfile = {
 
 export const DEFAULT_USER_PROFILE: UserProfile = DEFAULT_GUEST_PROFILE;
 
+export const SPECIES_FALLBACK_IMAGES: Record<string, string> = {
+  dog: 'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=800&q=80',
+  cat: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&w=800&q=80',
+  reptile: 'https://images.unsplash.com/photo-1563281577-a7be47e20db9?auto=format&fit=crop&w=800&q=80',
+  bird: 'https://images.unsplash.com/photo-1552728089-57bdde30beb3?auto=format&fit=crop&w=800&q=80',
+  'small-animal': 'https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?auto=format&fit=crop&w=800&q=80',
+  default: 'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=800&q=80',
+};
+
 export const PETS_DATA: Pet[] = [
   {
     id: 'barnaby',
@@ -65,14 +74,16 @@ export const PETS_DATA: Pet[] = [
     badges: ['Ready for Home', 'Adoptable'],
     status: 'Ready for Home',
     photos: [
-      '/assets/aistudio/Image_1_2fec3635.jpeg',
+      'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=1000&q=80',
+      'https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=1000&q=80',
+      'https://images.unsplash.com/photo-1587300003388-59208cc962cb?auto=format&fit=crop&w=1000&q=80',
       'https://lh3.googleusercontent.com/aida-public/AB6AXuAkManYdDt-TXJIjWXIZLXobnB8CJSYH-tf1XYGu3BUnsIO9S7NxmOoLiNetWtEqXVjKOL3O052CuzI9gYnzdvvfPZBlJC3c8CzVSjN1C8t26NpPb12TL4nGNUsdR7PwIvpOcpIKsKA01NyapVQnrGFyZpLa-gOK7U_0hmdvDFhiS1JYn7O-i54Mpy36g5rXtEjAOFk-JJvDjFmuixfkIVs7wy_-iV5FhGEmL2-_JySPhKj3xhRRu1g',
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuA_Z6UaxZssiH2DzAnr9VtRwNv7njx204W5MNol55IIZAwrEHCObUHacmEbnjfGtVTThpcRXyYLdBwsW6V-IZdowQP6UY11mfz4mNUpVlrJEq3k97ceBJZWoIhLxBVPSqJ38_a9In0utdI9fOdaIgmnoONsc8NQje5LaM6OsvToKDBjsfh9qxVNPpvoh0GOhYKWpN4b7UOhjsZ3pKXtEEMCsZZyMVT0eFtQZj1T4b09Wht15a8qMfP8',
+      '/assets/aistudio/Image_1_2fec3635.jpeg',
     ],
     photoAlts: [
       'A joyful golden retriever mix named Barnaby panting happily in a sun-drenched park with soft warm natural lighting, amber backlight, and emerald green foliage.',
       'Close up profile of a happy golden retriever mix dog with alert eyes, soft creamy amber fur, tilting head curiously on a rustic cozy shelter porch.',
-      'A friendly rescue dog sitting patiently on a soft green lawn with a volunteer trainer, playful body language, wearing a teal fabric collar with brass tag.'
+      'A friendly rescue golden retriever sitting patiently on a soft green lawn with a volunteer trainer, playful body language, wearing a teal fabric collar with brass tag.'
     ],
     temperamentTags: [
       'Gentle Soul',
