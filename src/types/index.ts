@@ -44,9 +44,17 @@ export interface Pet {
   }[];
 }
 
+export interface RadarSavedProof {
+  photoUrl: string;
+  rescuerName: string;
+  rescuedAt: string;
+  notes?: string;
+  clinicOrShelter?: string;
+}
+
 export interface RadarSighting {
   id: string;
-  animalType: 'dog' | 'cat' | 'puppies' | 'reptile' | 'bird' | 'other';
+  animalType: 'dog' | 'cat' | 'puppies' | 'reptile' | 'bird' | 'small-animal' | 'other';
   title: string;
   description: string;
   location: string;
@@ -54,10 +62,12 @@ export interface RadarSighting {
   distance: string;
   timeAgo: string;
   urgency: 'critical' | 'urgent' | 'moderate' | 'secured';
-  status: 'Searching' | 'Volunteer En Route' | 'Triage' | 'Secured';
+  status: 'Searching' | 'Volunteer En Route' | 'Triage' | 'Secured' | 'Rescued';
   respondersCount: number;
   image: string;
   reportedBy: string;
+  isSaved?: boolean;
+  savedProof?: RadarSavedProof;
 }
 
 export interface EmergencyClinic {
@@ -71,6 +81,33 @@ export interface EmergencyClinic {
   rating: number;
   services: string[];
   verified: boolean;
+}
+
+export interface RedeemedVoucher {
+  id: string;
+  voucherId: string;
+  title: string;
+  partner: string;
+  code: string;
+  discount: string;
+  redeemedAt: string;
+  expiresAt: string;
+  pointsSpent: number;
+  qrValue: string;
+  category: 'vet' | 'grooming' | 'supplies' | 'cafe';
+}
+
+export interface VoucherReward {
+  id: string;
+  title: string;
+  partner: string;
+  category: 'vet' | 'grooming' | 'supplies' | 'cafe';
+  pointsCost: number;
+  discount: string;
+  description: string;
+  icon: string;
+  badge: string;
+  terms: string;
 }
 
 export interface UserProfile {
@@ -88,5 +125,7 @@ export interface UserProfile {
   rescuesAssisted: number;
   petsFostered: number;
   joinedDate: string;
+  achievementPoints: number;
+  redeemedVouchers: RedeemedVoucher[];
 }
 

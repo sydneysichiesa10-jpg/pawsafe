@@ -169,12 +169,12 @@ export const ReportScreen: React.FC<ReportScreenProps> = ({
           </label>
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
             {[
-              { id: 'dog', label: 'Dog', icon: 'pets' },
-              { id: 'cat', label: 'Cat', icon: 'cruelty_free' },
-              { id: 'reptile', label: 'Reptile', icon: 'pest_control' },
-              { id: 'bird', label: 'Bird', icon: 'flutter' },
-              { id: 'puppies', label: 'Litter/Pups', icon: 'crib' },
-              { id: 'other', label: 'Other/Wild', icon: 'nature' },
+              { id: 'dog', label: 'Dog', emoji: '🐕' },
+              { id: 'cat', label: 'Cat', emoji: '🐱' },
+              { id: 'reptile', label: 'Reptile', emoji: '🐢' },
+              { id: 'bird', label: 'Bird', emoji: '🦜' },
+              { id: 'puppies', label: 'Litter/Pups', emoji: '🐾' },
+              { id: 'other', label: 'Rabbit/Other', emoji: '🐰' },
             ].map((t) => (
               <button
                 type="button"
@@ -182,12 +182,12 @@ export const ReportScreen: React.FC<ReportScreenProps> = ({
                 onClick={() => setAnimalType(t.id as any)}
                 className={`py-2.5 px-2 rounded-2xl flex flex-col items-center justify-center transition-all cursor-pointer border ${
                   animalType === t.id
-                    ? 'bg-[#004732] text-white border-[#004732] shadow-sm font-bold'
+                    ? 'bg-[#004732] text-white border-[#004732] shadow-sm font-bold scale-102'
                     : 'bg-[#ecf6f1] text-[#404944] border-transparent hover:bg-[#e0eae5]'
                 }`}
               >
-                <span className="material-symbols-outlined text-[20px] mb-0.5">{t.icon}</span>
-                <span className="text-[11px] truncate w-full text-center">{t.label}</span>
+                <span className="text-[22px] mb-0.5 leading-none select-none">{t.emoji}</span>
+                <span className="text-[11px] truncate w-full text-center font-semibold">{t.label}</span>
               </button>
             ))}
           </div>

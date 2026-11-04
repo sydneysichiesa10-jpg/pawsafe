@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Pet } from '../types';
 import { PETS_DATA, SPECIES_FALLBACK_IMAGES } from '../data/mockData';
+import { AnimalSpeciesTag, getAnimalDetails } from './AnimalBadge';
 
 interface AdoptScreenProps {
   selectedPet: Pet;
@@ -94,13 +95,13 @@ export const AdoptScreen: React.FC<AdoptScreenProps> = ({
     return matchesSearch;
   });
 
-  const categories: { label: CategoryFilter; icon: string; count: number }[] = [
-    { label: 'All', icon: 'pets', count: PETS_DATA.length },
-    { label: 'Dogs', icon: 'sound_detection_dog_barking', count: PETS_DATA.filter((p) => p.species === 'dog').length },
-    { label: 'Cats', icon: 'cruelty_free', count: PETS_DATA.filter((p) => p.species === 'cat').length },
-    { label: 'Reptiles', icon: 'pest_control', count: PETS_DATA.filter((p) => p.species === 'reptile').length },
-    { label: 'Birds & Small', icon: 'flutter', count: PETS_DATA.filter((p) => p.species === 'bird' || p.species === 'small-animal').length },
-    { label: 'In Foster', icon: 'home', count: PETS_DATA.filter((p) => p.status === 'In Foster').length },
+  const categories: { label: CategoryFilter; emoji: string; count: number }[] = [
+    { label: 'All', emoji: '🐾', count: PETS_DATA.length },
+    { label: 'Dogs', emoji: '🐕', count: PETS_DATA.filter((p) => p.species === 'dog').length },
+    { label: 'Cats', emoji: '🐱', count: PETS_DATA.filter((p) => p.species === 'cat').length },
+    { label: 'Reptiles', emoji: '🐢', count: PETS_DATA.filter((p) => p.species === 'reptile').length },
+    { label: 'Birds & Small', emoji: '🦜', count: PETS_DATA.filter((p) => p.species === 'bird' || p.species === 'small-animal').length },
+    { label: 'In Foster', emoji: '🏡', count: PETS_DATA.filter((p) => p.status === 'In Foster').length },
   ];
 
   /* =========================================================
@@ -152,7 +153,7 @@ export const AdoptScreen: React.FC<AdoptScreenProps> = ({
           )}
         </div>
 
-        {/* Filter Categories Chips */}
+        {/* Filter Categories Chips with exact matching species symbols */}
         <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2 mb-3">
           {categories.map((cat) => (
             <button
@@ -164,6 +165,7 @@ export const AdoptScreen: React.FC<AdoptScreenProps> = ({
                   : 'bg-white text-[#404944] hover:bg-[#ecf6f1] border border-[#e6f0eb]'
               }`}
             >
+              <span className="text-[14px] leading-none">{cat.emoji}</span>
               <span>{cat.label}</span>
               <span
                 className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
@@ -320,9 +322,7 @@ export const AdoptScreen: React.FC<AdoptScreenProps> = ({
                             {pet.ageShort} • {pet.gender}
                           </span>
                         </div>
-                        <span className="text-[12px] font-semibold bg-black/40 backdrop-blur-md px-2.5 py-0.5 rounded-full text-white/90">
-                          {pet.species.toUpperCase()}
-                        </span>
+                        <AnimalSpeciesTag animalType={pet.species} />
                       </div>
                     </div>
                   </div>
@@ -543,8 +543,8 @@ export const AdoptScreen: React.FC<AdoptScreenProps> = ({
         {/* Quick Vital Stats Bento Grid */}
         <div className="grid grid-cols-4 gap-2">
           <div className="bg-white p-3 rounded-2xl flex flex-col items-center text-center shadow-sm">
-            <span className="material-symbols-outlined text-[20px] text-[#004732] mb-1">
-              pets
+            <span className="text-[20px] mb-1 leading-none select-none">
+              {getAnimalDetails(selectedPet.species).emoji}
             </span>
             <span className="text-[11px] font-bold text-[#404944]">Breed</span>
             <span className="text-[13px] text-[#141d1a] font-semibold truncate w-full mt-0.5">

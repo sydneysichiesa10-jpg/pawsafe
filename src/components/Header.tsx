@@ -8,6 +8,7 @@ interface HeaderProps {
   onOpenLocationPicker: () => void;
   onOpenNotifications: () => void;
   onOpenProfile: () => void;
+  onOpenVouchers?: () => void;
   unreadCount?: number;
 }
 
@@ -17,6 +18,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenLocationPicker,
   onOpenNotifications,
   onOpenProfile,
+  onOpenVouchers,
   unreadCount = 2,
 }) => {
   return (
@@ -54,24 +56,38 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Right Actions */}
+        {/* Right Actions: Points Counter + Notifications + Profile */}
         <div className="flex items-center gap-1.5">
+          {onOpenVouchers && (
+            <button
+              onClick={onOpenVouchers}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#fff9eb] hover:bg-[#ffefc6] text-[#7a5500] font-black text-[12px] border border-[#fde7b3] transition-all cursor-pointer active:scale-95 shadow-2xs"
+              title="Achievement Points • Tap to Redeem Vouchers"
+              type="button"
+            >
+              <span>⭐</span>
+              <span>{userProfile.achievementPoints ?? 0}</span>
+              <span className="text-[10px] font-bold text-[#855e00] hidden xs:inline">PTS</span>
+            </button>
+          )}
+
           <button
             aria-label="Notifications"
             onClick={onOpenNotifications}
-            className="w-10 h-10 rounded-full flex items-center justify-center text-[#404944] hover:bg-[#ecf6f1] transition-all relative active:scale-95 cursor-pointer"
+            className="w-9 h-9 rounded-full flex items-center justify-center text-[#404944] hover:bg-[#ecf6f1] transition-all relative active:scale-95 cursor-pointer"
             type="button"
           >
-            <span className="material-symbols-outlined text-[22px]">notifications</span>
+            <span className="material-symbols-outlined text-[21px]">notifications</span>
             {unreadCount > 0 && (
-              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#a13e28] ring-2 ring-[#f2fcf6]" />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#a13e28] ring-2 ring-[#f2fcf6]" />
             )}
           </button>
 
           <button
             onClick={onOpenProfile}
-            className="flex items-center pl-1 focus:outline-none cursor-pointer group relative"
+            className="flex items-center pl-0.5 focus:outline-none cursor-pointer group relative"
             title={userProfile.isLoggedIn ? `${userProfile.nickname} • Rescuer Profile` : 'Guest Profile & Settings'}
+            type="button"
           >
             {userProfile.isLoggedIn ? (
               <img
@@ -81,7 +97,7 @@ export const Header: React.FC<HeaderProps> = ({
               />
             ) : (
               <div className="w-9 h-9 rounded-full bg-[#ecf6f1] text-[#004732] flex items-center justify-center ring-2 ring-[#e6f0eb] group-hover:ring-[#004732]/40 transition-all shadow-sm">
-                <span className="material-symbols-outlined text-[20px]">person</span>
+                <span className="material-symbols-outlined text-[19px]">person</span>
               </div>
             )}
           </button>

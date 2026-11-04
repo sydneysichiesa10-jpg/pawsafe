@@ -11,6 +11,7 @@ interface SettingsScreenProps {
   onSelectPet: (pet: Pet) => void;
   onNavigateToAdopt: () => void;
   currentLocation: string;
+  onOpenVouchers?: () => void;
 }
 
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({
@@ -22,6 +23,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   onSelectPet,
   onNavigateToAdopt,
   currentLocation,
+  onOpenVouchers,
 }) => {
   const [fosterAvailable, setFosterAvailable] = useState(true);
   const [alertRadius, setAlertRadius] = useState(5);
@@ -201,6 +203,45 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           </button>
         </div>
       )}
+
+      {/* Achievement Points & Rewards Vouchers Hub */}
+      <div className="bg-gradient-to-br from-[#004732] to-[#1e5f48] rounded-3xl p-5 shadow-sm text-white space-y-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-[#fbbc04] text-[#332300] flex items-center justify-center font-black text-[22px] shadow-sm flex-shrink-0">
+              ⭐
+            </div>
+            <div>
+              <span className="px-2 py-0.5 rounded-full bg-[#aff0d2] text-[#002115] text-[10px] font-black uppercase tracking-wider">
+                Rescue Hero Karma
+              </span>
+              <h3 className="text-[17px] font-bold text-white tracking-tight mt-0.5">
+                {userProfile.achievementPoints ?? 0} Achievement Points
+              </h3>
+              <p className="text-[12px] text-white/80">
+                {(userProfile.redeemedVouchers?.length ?? 0)} Active Voucher(s) in Wallet
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 border border-white/20 flex items-center justify-between text-[12px]">
+          <span className="text-white/90">
+            Earn <strong>+250 points</strong> every time you verify and save a stray animal on Radar!
+          </span>
+        </div>
+
+        {onOpenVouchers && (
+          <button
+            type="button"
+            onClick={onOpenVouchers}
+            className="w-full py-2.5 px-4 bg-[#fbbc04] hover:bg-[#ffd24d] text-[#332300] rounded-2xl text-[13px] font-black transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
+          >
+            <span className="material-symbols-outlined text-[18px]">storefront</span>
+            <span>Redeem Partner Vouchers & Perks</span>
+          </button>
+        )}
+      </div>
 
       {/* Foster Availability Switch */}
       <div className="bg-white rounded-3xl p-5 shadow-sm border border-[#e6f0eb] flex items-center justify-between gap-3">

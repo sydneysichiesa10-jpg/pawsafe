@@ -1,4 +1,4 @@
-import { Pet, RadarSighting, EmergencyClinic, UserProfile } from '../types';
+import { Pet, RadarSighting, EmergencyClinic, UserProfile, VoucherReward, RedeemedVoucher } from '../types';
 
 export const PAWSAFE_LOGO = "https://lh3.googleusercontent.com/aida-public/AB6AXuDK8_N-WZSl01MCAnJHApGp2iP3salCkmiQEFFyN2_hDRZYHRZbaDCBrsH9dge5mddoeUlZ6NHeaF3KBczuH90Fpcux_-9z6A5uVG7AymKGfhJMNuqPNqoGPo8qPvXAtDtfK3IXIVRnKLOzrfEzxMhryQpYH6-0rA9jPcNZauO2l1qkojfZYWMGt2wKfMIWf3SH1_ARz_7pQ1vMFibo7_0rU_CE-ii1n0S4B7gKj6OCEVC_RYBhSWWE";
 export const USER_AVATAR = "https://lh3.googleusercontent.com/aida-public/AB6AXuARmYRrOAavj9ZxsI1j3lDrZzRDlztKlWLdR4i33bPFJ4qYXg0d2z0JrTMGso_V05soimUfeSORTiR5jk9hy5SXdYh7l4nbtcSpLNvdNe2dPy8hxQXn9SQE4N76guGig8ntT4xU-ITwjYxfS_myp4pxLvI9yUDjTSDzd-EazMUzNJQM9ET4rheE5QQLAN3fS2xR-UnW6J4i1zrlZbenwVvGK0SYMMgSt_lb2pxPLU6kwyEuxoeogCm7";
@@ -28,6 +28,8 @@ export const DEFAULT_GUEST_PROFILE: UserProfile = {
   rescuesAssisted: 0,
   petsFostered: 0,
   joinedDate: 'Browsing as Guest',
+  achievementPoints: 100,
+  redeemedVouchers: [],
 };
 
 export const DEMO_RESCUER_PROFILE: UserProfile = {
@@ -45,6 +47,22 @@ export const DEMO_RESCUER_PROFILE: UserProfile = {
   rescuesAssisted: 12,
   petsFostered: 4,
   joinedDate: 'Joined March 2026',
+  achievementPoints: 650,
+  redeemedVouchers: [
+    {
+      id: 'voucher-demo-1',
+      voucherId: 'v-groom-50',
+      title: '50% Off Full Grooming & Bath',
+      partner: 'Happy Tails Grooming Spa • Kemang',
+      code: 'RESCUE-HT50-9821',
+      discount: '50% Discount',
+      redeemedAt: 'March 28, 2026',
+      expiresAt: 'May 28, 2026',
+      pointsSpent: 450,
+      qrValue: 'PAWSAFE-VOUCHER-HT50-9821',
+      category: 'grooming',
+    },
+  ],
 };
 
 export const DEFAULT_USER_PROFILE: UserProfile = DEFAULT_GUEST_PROFILE;
@@ -629,92 +647,100 @@ export const RADAR_SIGHTINGS: RadarSighting[] = [
   {
     id: 'sight-1',
     animalType: 'dog',
-    title: 'Golden Retriever Mix Spotted Near Taman Suropati',
-    description: 'Medium honey-colored dog without collar trotting gently along path near Taman Suropati. Seems timid but friendly.',
-    location: 'Taman Suropati, Menteng • Jakarta Pusat',
+    title: 'Lost Golden Mix Waiting by Barito Park Fountain',
+    description: 'Medium honey-gold dog with muddy paws resting gently beside the park fountain. Kept safe with water bowl by local street coffee vendor. Very gentle, nudges hands for comfort.',
+    location: 'Taman Ayodya, Jl. Barito • Kebayoran Baru, Jakarta Selatan',
     coordinates: { x: 38, y: 55 },
-    distance: '1.2 km away',
-    timeAgo: '14 min ago',
+    distance: '0.6 km away',
+    timeAgo: '8 min ago',
     urgency: 'urgent',
     status: 'Volunteer En Route',
     respondersCount: 2,
-    image: 'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=400&q=80',
-    reportedBy: 'Kelsey (Pagi Runner)'
+    image: 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=600&q=80',
+    reportedBy: 'Bimo (Barito Street Coffee)'
   },
   {
     id: 'sight-2',
     animalType: 'puppies',
-    title: 'Box of 3 Pups Under Pedestrian Overpass',
-    description: 'Cardboard box with 3 small puppies (approx 5-6 weeks) found sheltered under overpass ramp. Clean water provided by passerby.',
-    location: 'Jl. Asia Afrika & Cikapundung • Bandung',
+    title: 'Cardboard Box of 3 Pups Left Under Minimarket Awning',
+    description: 'Three domestic mixed puppies (~6 weeks old) found huddled together in fruit carton box during heavy rain. Minimarket staff brought them under the dry roof and provided goat milk.',
+    location: 'Jl. Kemang Timur No. 12 (Depan Alfamart) • Jakarta Selatan',
     coordinates: { x: 62, y: 42 },
-    distance: '1.8 km away',
-    timeAgo: '28 min ago',
+    distance: '1.1 km away',
+    timeAgo: '18 min ago',
     urgency: 'critical',
     status: 'Searching',
     respondersCount: 4,
-    image: 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=400&q=80',
-    reportedBy: 'Carlos M.'
+    image: 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=600&q=80',
+    reportedBy: 'Sari (Kemang Timur Resident)'
   },
   {
     id: 'sight-3',
     animalType: 'cat',
-    title: 'Calico Kitten Stranded in Drainage Culvert',
-    description: 'Vocal calico kitten crying inside shallow dry drainage pipe. Dry weather, kitten seems scared but uninjured.',
-    location: 'Jl. Pantai Berawa • Canggu, Bali',
+    title: 'Vocal Calico Kitten Stuck Behind Café AC Compressor',
+    description: 'Young calico kitten crying continuously from narrow gap behind outdoor AC compressor unit in Senopati café backyard. Dry weather, kitten seems uninjured but scared of traffic noise.',
+    location: 'Jl. Senopati No. 41 • Kebayoran Baru, Jakarta Selatan',
     coordinates: { x: 74, y: 28 },
-    distance: '2.5 km away',
-    timeAgo: '42 min ago',
+    distance: '1.4 km away',
+    timeAgo: '27 min ago',
     urgency: 'moderate',
     status: 'Triage',
     respondersCount: 1,
-    image: 'https://images.unsplash.com/photo-1574158622682-e40e69881006?auto=format&fit=crop&w=400&q=80',
-    reportedBy: 'Devon K.'
+    image: 'https://images.unsplash.com/photo-1574158622682-e40e69881006?auto=format&fit=crop&w=600&q=80',
+    reportedBy: 'Adit (Café Barista)'
   },
   {
     id: 'sight-4',
     animalType: 'reptile',
-    title: 'Escaped Pet Sulcata Tortoise in Park Greenway',
+    title: 'Escaped Pet Sulcata Tortoise Grazing on BSD Greenway',
     description: 'Large pet tortoise grazing peacefully on public grass near community garden. Shell healthy, appears to be an escaped beloved pet.',
     location: 'Taman Kota BSD • Tangerang Selatan',
     coordinates: { x: 26, y: 35 },
-    distance: '0.8 km away',
-    timeAgo: '50 min ago',
-    urgency: 'moderate',
-    status: 'Secured',
+    distance: '2.2 km away',
+    timeAgo: '45 min ago',
+    urgency: 'secured',
+    status: 'Rescued',
     respondersCount: 2,
-    image: 'https://images.unsplash.com/photo-1508455858334-95337ba25607?auto=format&fit=crop&w=400&q=80',
-    reportedBy: 'Indra (Taman Security)'
+    image: 'https://images.unsplash.com/photo-1508455858334-95337ba25607?auto=format&fit=crop&w=600&q=80',
+    reportedBy: 'Indra (Satpam Taman BSD)',
+    isSaved: true,
+    savedProof: {
+      photoUrl: 'https://images.unsplash.com/photo-1508455858334-95337ba25607?auto=format&fit=crop&w=600&q=80',
+      rescuerName: 'Sydney (Volunteer)',
+      rescuedAt: 'Today, 14:20 WIB',
+      notes: 'Safely secured in padded transport container and brought to BSD Wildlife & Exotic Pet Station. Microchip scan matched owner!',
+      clinicOrShelter: 'BSD Wildlife Triage Center',
+    },
   },
   {
     id: 'sight-5',
     animalType: 'bird',
-    title: 'Exotic Parakeet Grounded with Wing Fatigue',
-    description: 'Tame green conure grounded on low hedge. Gently approached and accepted water drops from bottle cap. Needs temporary avian crate.',
-    location: 'Jl. Diponegoro • Surabaya Pusat',
+    title: 'Tame Green Conure Grounded on Hibiscus Bush in Menteng',
+    description: 'Tame green conure grounded on low garden hedge. Gently approached and accepted water drops from bottle cap. Appears exhausted, needs temporary avian carrier.',
+    location: 'Taman Menteng, Jl. HOS Cokroaminoto • Jakarta Pusat',
     coordinates: { x: 52, y: 76 },
-    distance: '2.1 km away',
+    distance: '1.8 km away',
     timeAgo: '1 hr ago',
     urgency: 'urgent',
     status: 'Volunteer En Route',
     respondersCount: 2,
-    image: 'https://images.unsplash.com/photo-1552728089-57bdde30beb3?auto=format&fit=crop&w=400&q=80',
-    reportedBy: 'Siti Rahma'
+    image: 'https://images.unsplash.com/photo-1552728089-57bdde30beb3?auto=format&fit=crop&w=600&q=80',
+    reportedBy: 'Fajar (Menteng Cyclist)'
   },
   {
     id: 'sight-6',
     animalType: 'dog',
-    title: 'Senior Black Lab Resting by Bus Shelter',
-    description: 'Older lab with grey muzzle wearing blue reflective collar with expired tag. Very gentle, drinking water provided.',
-    location: 'Jl. Raya Darmo & Halte Bus • Surabaya',
+    title: 'Senior Black Lab Mix Sheltered by Halte Sudirman',
+    description: 'Older lab with grey muzzle wearing blue reflective collar with expired tag. Very gentle and calm, drinking water provided by commuters.',
+    location: 'Halte TransJakarta Bundaran HI & Sudirman • Jakarta Pusat',
     coordinates: { x: 45, y: 72 },
-    distance: '3.1 km away',
+    distance: '2.5 km away',
     timeAgo: '2 hrs ago',
     urgency: 'secured',
     status: 'Secured',
     respondersCount: 3,
-    image: 'https://images.unsplash.com/photo-1518717758536-85ae29035b6d?auto=format&fit=crop&w=400&q=80',
-    reportedBy: 'Hana T. (Trans Semanggi Commuter)'
+    image: 'https://images.unsplash.com/photo-1518717758536-85ae29035b6d?auto=format&fit=crop&w=600&q=80',
+    reportedBy: 'Dewi A. (TransJakarta Commuter)'
   }
 ];
 
@@ -807,3 +833,78 @@ export const INDONESIAN_CITIES: IndonesianCityZone[] = [
 ];
 
 export const NEIGHBORHOODS = INDONESIAN_CITIES.map((c) => c.name);
+
+export const VOUCHER_CATALOG: VoucherReward[] = [
+  {
+    id: 'v-vet-150',
+    title: 'Free Comprehensive Vet Checkup & Health Passport',
+    partner: 'PawSafe Haven Animal Hospital • Kemang',
+    category: 'vet',
+    pointsCost: 550,
+    discount: 'Rp 150.000 Value (100% Free)',
+    description: 'Complete physical wellness examination, dental check, coat triage, and preventive care report by licensed veterinarian.',
+    icon: 'medical_services',
+    badge: 'Popular for Rescuers',
+    terms: 'Valid at Kemang & Senopati branches. Walk-in or reservation.',
+  },
+  {
+    id: 'v-groom-50',
+    title: '50% Off Full Grooming & Medicated Bath',
+    partner: 'Happy Tails Grooming Spa • Kemang & Senopati',
+    category: 'grooming',
+    pointsCost: 450,
+    discount: '50% Off Any Pet Size',
+    description: 'Includes ear cleaning, nail trim, anti-flea gentle oatmeal bath, blow dry, and finishing brush.',
+    icon: 'spa',
+    badge: 'Best Value',
+    terms: 'Applicable for dogs and cats. Appointment required 1 day prior.',
+  },
+  {
+    id: 'v-pet-credit',
+    title: 'Rp 50.000 Store Credit on Food & Supplies',
+    partner: 'Kemang Pet Mart & Supply Hub',
+    category: 'supplies',
+    pointsCost: 350,
+    discount: 'Rp 50.000 Off Minimum Rp 100k',
+    description: 'Use across premium pet food, dry kibble, cat litter, leashes, harnesses, and carrier crates.',
+    icon: 'shopping_bag',
+    badge: 'Instant Redeem',
+    terms: 'Valid online or in-store. One coupon per purchase.',
+  },
+  {
+    id: 'v-cafe-treat',
+    title: 'Free Artisanal Coffee & Pet Treat Platter',
+    partner: 'Paw Café & Bakery • Dharmawangsa',
+    category: 'cafe',
+    pointsCost: 250,
+    discount: 'Rp 65.000 Value',
+    description: 'Enjoy a free iced latte or matcha, accompanied by an organic chicken-liver pupcake or catnip biscuit platter.',
+    icon: 'coffee',
+    badge: 'Treat Yourself',
+    terms: 'Valid during weekday café hours with your rescued furry friend.',
+  },
+  {
+    id: 'v-kibble-2kg',
+    title: 'Free 2kg Premium Rescue Support Kibble Bag',
+    partner: 'Satwa Sejahtera Nutrition Network',
+    category: 'supplies',
+    pointsCost: 750,
+    discount: 'Rp 220.000 Value',
+    description: 'High-protein nourishing food formulated specifically for rehabilitation and recovery of rescued animals.',
+    icon: 'inventory_2',
+    badge: 'Rescue Champion',
+    terms: 'Pickup at any PawSafe Haven partner clinic or free courier delivery.',
+  },
+  {
+    id: 'v-vaccine-rabies',
+    title: 'Rabies Vaccination & De-worming Pass',
+    partner: 'Klinik Satwa Pratama Triage',
+    category: 'vet',
+    pointsCost: 600,
+    discount: 'Rp 180.000 Value',
+    description: 'Official rabies vaccination dose, certificate, tag, and broad-spectrum deworming tablet for any rescue or pet.',
+    icon: 'vaccines',
+    badge: 'Essential Health',
+    terms: 'Must bring animal for in-person vaccine administration.',
+  },
+];

@@ -73,6 +73,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLoginSuccess })
       rescuesAssisted: isSydney ? 12 : 1,
       petsFostered: isSydney ? 4 : 0,
       joinedDate: 'Joined March 2026',
+      achievementPoints: isSydney ? 650 : 200,
+      redeemedVouchers: [],
     };
 
     onLoginSuccess(profile);
@@ -125,6 +127,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLoginSuccess })
       rescuesAssisted: 0,
       petsFostered: 0,
       joinedDate: 'Joined just now',
+      achievementPoints: 100,
+      redeemedVouchers: [],
     };
 
     onLoginSuccess(newProfile);
