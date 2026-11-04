@@ -68,26 +68,30 @@ export default function App() {
   const [unreadNotifications, setUnreadNotifications] = useState(2);
 
   // User Profile state (defaults to logged out / Guest mode)
+  // If not signed in, points progress is lost upon exit/reload
   const [userProfile, setUserProfile] = useState<UserProfile>(() => {
     try {
       const saved = localStorage.getItem('pawsafe_user_profile');
       if (saved) {
         const parsed = JSON.parse(saved);
-        // If prior cache had Sydney Sichiesa from the old mock default, reset to logged out Guest
-        if (parsed.id === 'user-sydney' || parsed.username === 'sydney_rescuer' || parsed.fullName === 'Sydney Sichiesa') {
-          return DEFAULT_GUEST_PROFILE;
+        // Only authenticated logged-in profiles retain permanent points!
+        if (parsed && parsed.isLoggedIn) {
+          return {
+            ...parsed,
+            achievementPoints: parsed.achievementPoints ?? 0,
+            redeemedVouchers: parsed.redeemedVouchers ?? [],
+          };
         }
-        return {
-          ...DEFAULT_GUEST_PROFILE,
-          ...parsed,
-          achievementPoints: parsed.achievementPoints ?? DEFAULT_GUEST_PROFILE.achievementPoints,
-          redeemedVouchers: parsed.redeemedVouchers ?? [],
-        };
       }
     } catch {
       // Fallback
     }
-    return DEFAULT_GUEST_PROFILE;
+    // Guests always start fresh with 0 points (points progress is lost if not signed in)
+    return {
+      ...DEFAULT_GUEST_PROFILE,
+      achievementPoints: 0,
+      redeemedVouchers: [],
+    };
   });
 
   // Modals
@@ -133,55 +137,160 @@ export default function App() {
     }, 200);
   };
 
-  // Real-time multi-screen live sync via Server-Sent Events (SSE) + BroadcastChannel
+  // Real-time multi-device live sync via WebSockets + SSE + Polling fallback + BroadcastChannel
   const broadcastChannelRef = useRef<BroadcastChannel | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
+  const [networkConnected, setNetworkConnected] = useState(false);
+  const [connectedDevices, setConnectedDevices] = useState(1);
 
   useEffect(() => {
-    // 1. Initial sync with live server store
-    fetch('/api/sightings')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data?.success && Array.isArray(data.sightings) && data.sightings.length > 0) {
-          setSightings(data.sightings);
-        }
-      })
-      .catch(() => {
-        // Offline / fallback to initial state
-      });
-
-    // 2. Real-time Server-Sent Events (SSE) for cross-device & cross-user sync
+    let isMounted = true;
+    let reconnectTimeout: any = null;
     let eventSource: EventSource | null = null;
+
+    // Helper for idempotent incoming new sighting
+    const processIncomingSighting = (incoming: RadarSighting) => {
+      setSightings((prev) => {
+        if (prev.some((s) => s.id === incoming.id)) return prev;
+        showToast('radar', `🚨 Live Network: Stray reported at ${incoming.location.split('•')[0].trim()}!`);
+        setUnreadNotifications((n) => n + 1);
+        const next = [incoming, ...prev];
+        try {
+          localStorage.setItem('pawsafe_radar_sightings', JSON.stringify(next));
+        } catch {}
+        return next;
+      });
+    };
+
+    // Helper for idempotent incoming updated sighting
+    const processIncomingUpdate = (updated: RadarSighting) => {
+      setSightings((prev) => {
+        const next = prev.map((s) => (s.id === updated.id ? updated : s));
+        try {
+          localStorage.setItem('pawsafe_radar_sightings', JSON.stringify(next));
+        } catch {}
+        return next;
+      });
+      if (updated.isSaved) {
+        showToast('verified', `🎉 Live Update: ${updated.title} was safely rescued!`);
+      }
+    };
+
+    // 1. Initial & Periodic Polling Sync (guarantees cross-device delivery even if WS is blocked)
+    const syncFromServer = async (isInitial = false) => {
+      try {
+        const res = await fetch('/api/sightings');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data?.connectedDevices && typeof data.connectedDevices === 'number') {
+          if (isMounted) setConnectedDevices(Math.max(1, data.connectedDevices));
+        }
+        if (data?.success && Array.isArray(data.sightings) && data.sightings.length > 0) {
+          if (!isMounted) return;
+
+          setSightings((prev) => {
+            // Check for brand new sightings reported on other devices
+            if (!isInitial && prev.length > 0) {
+              const prevIds = new Set(prev.map((s) => s.id));
+              const newItems = data.sightings.filter((s: RadarSighting) => !prevIds.has(s.id));
+              if (newItems.length > 0) {
+                const newest = newItems[0];
+                showToast('radar', `🚨 Live Network: Stray reported at ${newest.location.split('•')[0].trim()}!`);
+                setUnreadNotifications((n) => n + newItems.length);
+              }
+            }
+            try {
+              localStorage.setItem('pawsafe_radar_sightings', JSON.stringify(data.sightings));
+            } catch {}
+            return data.sightings;
+          });
+          setNetworkConnected(true);
+        }
+      } catch {
+        // Fallback
+      }
+    };
+
+    // Run initial fetch
+    syncFromServer(true);
+
+    // Poll every 2 seconds to guarantee 100% sync across all active browsers & mobile devices
+    const pollInterval = setInterval(() => {
+      syncFromServer(false);
+    }, 2000);
+
+    // 2. Real-Time WebSockets Connection for instantaneous zero-latency updates
+    const connectWebSocket = () => {
+      try {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/ws`;
+        const ws = new WebSocket(wsUrl);
+        wsRef.current = ws;
+
+        ws.onopen = () => {
+          if (isMounted) setNetworkConnected(true);
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (!data) return;
+
+            if (data.type === 'PRESENCE_UPDATE' && typeof data.count === 'number') {
+              if (isMounted) setConnectedDevices(Math.max(1, data.count));
+            } else if (data.type === 'INIT_SIGHTINGS' && Array.isArray(data.sightings)) {
+              if (isMounted && data.sightings.length > 0) {
+                setSightings(data.sightings);
+                if (data.connectedDevices) setConnectedDevices(Math.max(1, data.connectedDevices));
+              }
+            } else if (data.type === 'NEW_SIGHTING' && data.sighting) {
+              processIncomingSighting(data.sighting as RadarSighting);
+            } else if (data.type === 'UPDATE_SIGHTING' && data.sighting) {
+              processIncomingUpdate(data.sighting as RadarSighting);
+            }
+          } catch {
+            // Ignore parse errors
+          }
+        };
+
+        ws.onclose = () => {
+          if (isMounted) {
+            // Reconnect after 2 seconds
+            reconnectTimeout = setTimeout(connectWebSocket, 2000);
+          }
+        };
+
+        ws.onerror = () => {
+          ws.close();
+        };
+      } catch {
+        // Fallback to SSE and polling
+      }
+    };
+
+    connectWebSocket();
+
+    // 3. Server-Sent Events (SSE) Stream fallback
     try {
       eventSource = new EventSource('/api/sightings/stream');
-      eventSource.onmessage = (event) => {
+      eventSource.onmessage = (e) => {
         try {
-          const data = JSON.parse(event.data);
-          if (!data) return;
-
-          if (data.type === 'NEW_SIGHTING' && data.sighting) {
-            const incoming = data.sighting as RadarSighting;
-            setSightings((prev) => {
-              if (prev.some((s) => s.id === incoming.id)) return prev;
-              return [incoming, ...prev];
-            });
-            setUnreadNotifications((n) => n + 1);
-            showToast('radar', `🚨 Live Network: Stray reported at ${incoming.location.split('•')[0].trim()}!`);
+          const data = JSON.parse(e.data);
+          if (data.type === 'PRESENCE_UPDATE' && typeof data.count === 'number') {
+            if (isMounted) setConnectedDevices(Math.max(1, data.count));
+          } else if (data.type === 'NEW_SIGHTING' && data.sighting) {
+            processIncomingSighting(data.sighting as RadarSighting);
           } else if (data.type === 'UPDATE_SIGHTING' && data.sighting) {
-            const incoming = data.sighting as RadarSighting;
-            setSightings((prev) => prev.map((s) => (s.id === incoming.id ? incoming : s)));
-            if (incoming.isSaved) {
-              showToast('verified', `🎉 Live Update: ${incoming.title} was safely rescued!`);
-            }
+            processIncomingUpdate(data.sighting as RadarSighting);
           }
-        } catch {
-          // Ignore
-        }
+        } catch {}
       };
-    } catch {
-      // Ignore
-    }
+      eventSource.onerror = () => {
+        // SSE error handled silently
+      };
+    } catch {}
 
-    // 3. Local BroadcastChannel for immediate same-browser tab sync
+    // 4. Local BroadcastChannel for immediate same-browser multi-tab sync
     try {
       const channel = new BroadcastChannel('pawsafe_live_radar_network');
       broadcastChannelRef.current = channel;
@@ -191,15 +300,9 @@ export default function App() {
         if (!data) return;
 
         if (data.type === 'NEW_SIGHTING' && data.sighting) {
-          const incoming = data.sighting as RadarSighting;
-          setSightings((prev) => {
-            if (prev.some((s) => s.id === incoming.id)) return prev;
-            return [incoming, ...prev];
-          });
-          setUnreadNotifications((n) => n + 1);
+          processIncomingSighting(data.sighting as RadarSighting);
         } else if (data.type === 'UPDATE_SIGHTING' && data.sighting) {
-          const incoming = data.sighting as RadarSighting;
-          setSightings((prev) => prev.map((s) => (s.id === incoming.id ? incoming : s)));
+          processIncomingUpdate(data.sighting as RadarSighting);
         }
       };
     } catch {
@@ -207,6 +310,10 @@ export default function App() {
     }
 
     return () => {
+      isMounted = false;
+      clearInterval(pollInterval);
+      if (reconnectTimeout) clearTimeout(reconnectTimeout);
+      wsRef.current?.close();
       eventSource?.close();
       broadcastChannelRef.current?.close();
     };
@@ -223,13 +330,21 @@ export default function App() {
       return next;
     });
 
-    // Update on live server so all other people's screens receive it immediately
+    // 1. Send via WebSocket if open
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      try {
+        wsRef.current.send(JSON.stringify({ type: 'UPDATE_SIGHTING', sighting: updated }));
+      } catch {}
+    }
+
+    // 2. Update on live server via REST (broadcasts to other SSE and WS clients)
     fetch(`/api/sightings/${encodeURIComponent(updated.id)}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updated),
     }).catch(() => {});
 
+    // 3. Update local tabs via BroadcastChannel
     try {
       broadcastChannelRef.current?.postMessage({
         type: 'UPDATE_SIGHTING',
@@ -247,17 +362,33 @@ export default function App() {
         achievementPoints: (prev.achievementPoints ?? 0) + pointsToAdd,
         rescuesAssisted: (prev.rescuesAssisted ?? 0) + 1,
       };
-      try {
-        localStorage.setItem('pawsafe_user_profile', JSON.stringify(updated));
-      } catch {
-        // Ignore
+
+      // ONLY save to persistent storage if user is signed in!
+      // If not signed in, points progress is temporary and will be lost on reload or closing.
+      if (prev.isLoggedIn) {
+        try {
+          localStorage.setItem('pawsafe_user_profile', JSON.stringify(updated));
+        } catch {
+          // Ignore
+        }
+        showToast('military_tech', `+${pointsToAdd} Permanent Points! ${reason}`);
+      } else {
+        showToast(
+          'warning',
+          `+${pointsToAdd} Temporary Points! Sign in before leaving or your progress will be lost.`
+        );
       }
       return updated;
     });
-    showToast('military_tech', `+${pointsToAdd} Achievement Points! ${reason}`);
   };
 
   const handleRedeemVoucher = (voucher: VoucherReward): boolean => {
+    if (!userProfile.isLoggedIn) {
+      showToast('warning', 'Please sign in to save your points and redeem vouchers!');
+      setIsAuthModalOpen(true);
+      return false;
+    }
+
     const currentPoints = userProfile.achievementPoints ?? 0;
     if (currentPoints < voucher.pointsCost) {
       showToast('error', `Need ${voucher.pointsCost - currentPoints} more points to redeem!`);
@@ -317,13 +448,21 @@ export default function App() {
     setUnreadNotifications((n) => n + 1);
     handleAwardPoints(50, 'for contributing a verified field sighting!');
 
-    // Push to live server so it broadcasts to all other users' screens immediately
+    // 1. Send via WebSocket if open
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      try {
+        wsRef.current.send(JSON.stringify({ type: 'REPORT_SIGHTING', sighting: newSighting }));
+      } catch {}
+    }
+
+    // 2. Push to live server so it broadcasts to all other users' screens immediately
     fetch('/api/sightings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newSighting),
     }).catch(() => {});
 
+    // 3. Broadcast to local tabs
     try {
       broadcastChannelRef.current?.postMessage({
         type: 'NEW_SIGHTING',
@@ -334,14 +473,23 @@ export default function App() {
     }
   };
 
-  const handleLoginSuccess = (profile: UserProfile) => {
-    setUserProfile(profile);
+  const handleLoginSuccess = (profile: UserProfile, guestPointsToKeep?: number) => {
+    const finalPoints = (profile.achievementPoints ?? 0) + (guestPointsToKeep || 0);
+    const updatedProfile: UserProfile = {
+      ...profile,
+      achievementPoints: finalPoints,
+    };
+    setUserProfile(updatedProfile);
     try {
-      localStorage.setItem('pawsafe_user_profile', JSON.stringify(profile));
+      localStorage.setItem('pawsafe_user_profile', JSON.stringify(updatedProfile));
     } catch {
       // Ignore
     }
-    showToast('check_circle', `Welcome, ${profile.nickname}!`);
+    if (guestPointsToKeep && guestPointsToKeep > 0) {
+      showToast('verified', `Welcome, ${profile.nickname}! +${guestPointsToKeep} temporary points saved to your account.`);
+    } else {
+      showToast('check_circle', `Welcome, ${profile.nickname}!`);
+    }
   };
 
   const handleSaveProfile = (updatedProfile: UserProfile) => {
@@ -359,16 +507,18 @@ export default function App() {
       ...DEFAULT_GUEST_PROFILE,
       id: `guest-${Date.now()}`,
       city: currentLocation,
+      achievementPoints: 0, // Guest points are reset to 0
+      redeemedVouchers: [],
     };
     setUserProfile(guestProfile);
     setFavorites([]);
     try {
-      localStorage.setItem('pawsafe_user_profile', JSON.stringify(guestProfile));
+      localStorage.removeItem('pawsafe_user_profile'); // Clear storage so guest progress is not kept
       localStorage.removeItem('pawsafe_favorites');
     } catch {
       // Ignore
     }
-    showToast('info', 'Browsing as Guest. You can sign in anytime in Settings.');
+    showToast('info', 'Logged out. Guest points are reset — sign in anytime to access saved points.');
   };
 
   return (
@@ -425,6 +575,9 @@ export default function App() {
               onOpenDirections={(address) => setDirectionsAddress(address)}
               onOpenVouchers={() => setIsVouchersModalOpen(true)}
               onAwardPoints={handleAwardPoints}
+              networkConnected={networkConnected}
+              connectedDevices={connectedDevices}
+              onOpenAuth={() => setIsAuthModalOpen(true)}
             />
           )}
 
@@ -526,6 +679,7 @@ export default function App() {
           <AuthModal
             onClose={() => setIsAuthModalOpen(false)}
             onLoginSuccess={handleLoginSuccess}
+            guestPoints={!userProfile.isLoggedIn ? (userProfile.achievementPoints ?? 0) : 0}
           />
         )}
 
@@ -544,6 +698,7 @@ export default function App() {
             userProfile={userProfile}
             onClose={() => setIsVouchersModalOpen(false)}
             onRedeemVoucher={handleRedeemVoucher}
+            onOpenAuth={() => setIsAuthModalOpen(true)}
             onNavigateToRadar={() => {
               setIsVouchersModalOpen(false);
               setCurrentTab('radar');

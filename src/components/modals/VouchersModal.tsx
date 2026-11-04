@@ -7,6 +7,7 @@ interface VouchersModalProps {
   onClose: () => void;
   onRedeemVoucher: (voucher: VoucherReward) => boolean;
   onNavigateToRadar: () => void;
+  onOpenAuth?: () => void;
 }
 
 export const VouchersModal: React.FC<VouchersModalProps> = ({
@@ -14,6 +15,7 @@ export const VouchersModal: React.FC<VouchersModalProps> = ({
   onClose,
   onRedeemVoucher,
   onNavigateToRadar,
+  onOpenAuth,
 }) => {
   const [activeTab, setActiveTab] = useState<'catalog' | 'my-vouchers'>('catalog');
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'vet' | 'grooming' | 'supplies' | 'cafe'>('all');
@@ -36,6 +38,13 @@ export const VouchersModal: React.FC<VouchersModalProps> = ({
   };
 
   const handleRedeem = (voucher: VoucherReward) => {
+    if (!userProfile.isLoggedIn) {
+      if (onOpenAuth) {
+        onClose();
+        onOpenAuth();
+      }
+      return;
+    }
     if (points < voucher.pointsCost) return;
     setRedeemingId(voucher.id);
 
@@ -84,10 +93,14 @@ export const VouchersModal: React.FC<VouchersModalProps> = ({
                 ⭐
               </div>
               <div>
-                <p className="text-[11px] text-white/80 font-medium">Your Current Balance</p>
+                <p className="text-[11px] text-white/80 font-medium">
+                  {userProfile.isLoggedIn ? 'Your Permanent Balance' : 'Temporary Guest Balance'}
+                </p>
                 <div className="flex items-baseline gap-1">
                   <span className="text-[22px] font-black text-white tracking-tight">{points}</span>
-                  <span className="text-[12px] font-bold text-[#aff0d2]">PTS</span>
+                  <span className="text-[12px] font-bold text-[#aff0d2]">
+                    {userProfile.isLoggedIn ? 'PTS' : 'PTS (UNSAVED)'}
+                  </span>
                 </div>
               </div>
             </div>
@@ -103,6 +116,29 @@ export const VouchersModal: React.FC<VouchersModalProps> = ({
               <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
             </button>
           </div>
+
+          {/* Guest Unsaved Points Warning Banner */}
+          {!userProfile.isLoggedIn && (
+            <div className="mt-2.5 bg-[#fef08a] text-[#78350f] p-2.5 rounded-2xl flex items-center justify-between gap-2 shadow-xs">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="material-symbols-outlined text-[18px] text-[#b45309] flex-shrink-0">warning</span>
+                <p className="text-[11px] leading-tight font-medium">
+                  <strong>Points will be lost!</strong> Guest progress is wiped on exit. Sign in to save permanently.
+                </p>
+              </div>
+              {onOpenAuth && (
+                <button
+                  onClick={() => {
+                    onClose();
+                    onOpenAuth();
+                  }}
+                  className="bg-[#b45309] hover:bg-[#92400e] text-white text-[10.5px] font-black px-2.5 py-1 rounded-full whitespace-nowrap cursor-pointer active:scale-95 flex-shrink-0"
+                >
+                  Sign In
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Tab Navigation */}
@@ -228,18 +264,22 @@ export const VouchersModal: React.FC<VouchersModalProps> = ({
 
                         <button
                           onClick={() => handleRedeem(v)}
-                          disabled={!canAfford || isRedeeming}
+                          disabled={userProfile.isLoggedIn && (!canAfford || isRedeeming)}
                           className={`py-1.5 px-3.5 rounded-full text-[12px] font-bold transition-all cursor-pointer flex items-center gap-1 shadow-xs active:scale-95 disabled:cursor-not-allowed ${
-                            canAfford
+                            !userProfile.isLoggedIn
+                              ? 'bg-[#b45309] hover:bg-[#92400e] text-white'
+                              : canAfford
                               ? 'bg-[#004732] hover:bg-[#1e5f48] text-white'
                               : 'bg-[#f2fcf6] text-[#707973] border border-[#dbe5e0]'
                           }`}
                         >
                           <span className="material-symbols-outlined text-[15px]">
-                            {canAfford ? 'shopping_bag' : 'lock'}
+                            {!userProfile.isLoggedIn ? 'login' : canAfford ? 'shopping_bag' : 'lock'}
                           </span>
                           <span>
-                            {isRedeeming
+                            {!userProfile.isLoggedIn
+                              ? 'Sign In to Redeem'
+                              : isRedeeming
                               ? 'Redeeming...'
                               : canAfford
                               ? 'Redeem Voucher'

@@ -1,4 +1,6 @@
 import express from 'express';
+import http from 'http';
+import { WebSocketServer, WebSocket } from 'ws';
 import { createServer as createViteServer } from 'vite';
 import fs from 'fs';
 import path from 'path';
@@ -8,10 +10,22 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+const server = http.createServer(app);
 const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3000;
 const DATA_FILE = path.join(__dirname, '.sightings_store.json');
 
 app.use(express.json({ limit: '10mb' }));
+
+// Permissive CORS for cross-device, iframe, and preview environments
+app.use((_req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  if (_req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
 
 // Initial authentic Jakarta sightings
 const DEFAULT_SIGHTINGS = [
@@ -139,12 +153,99 @@ function saveSightings(sightings: any[]) {
   }
 }
 
-// Active Server-Sent Events client connections for multi-screen push
+// 1. WebSocket Server for bidirectional real-time multi-device sync
+const wss = new WebSocketServer({ server, path: '/ws' });
+
+function getConnectedCount() {
+  return Math.max(1, wss.clients.size);
+}
+
+function broadcastPresence() {
+  const count = getConnectedCount();
+  const payload = JSON.stringify({ type: 'PRESENCE_UPDATE', count });
+  wss.clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      try { client.send(payload); } catch {}
+    }
+  });
+  sseClients.forEach((client) => {
+    try { client.res.write(`data: ${payload}\n\n`); } catch {}
+  });
+}
+
+wss.on('connection', (ws) => {
+  // Send current state and presence count immediately upon connection
+  const currentSightings = getSightings();
+  const count = getConnectedCount();
+  ws.send(JSON.stringify({ 
+    type: 'INIT_SIGHTINGS', 
+    sightings: currentSightings,
+    connectedDevices: count,
+  }));
+  broadcastPresence();
+
+  ws.on('message', (message) => {
+    try {
+      const data = JSON.parse(message.toString());
+      if (data.type === 'REPORT_SIGHTING' && data.sighting) {
+        const sightings = getSightings();
+        const incoming = {
+          ...data.sighting,
+          id: data.sighting.id || `sight-${Date.now()}`,
+          timeAgo: 'Just now',
+        };
+        // Avoid duplicate ID if sent via REST and WS simultaneously
+        const existingIdx = sightings.findIndex((s) => s.id === incoming.id);
+        if (existingIdx !== -1) {
+          sightings[existingIdx] = incoming;
+        } else {
+          sightings.unshift(incoming);
+        }
+        saveSightings(sightings);
+        broadcastRealtime('NEW_SIGHTING', incoming);
+      } else if (data.type === 'UPDATE_SIGHTING' && data.sighting) {
+        const sightings = getSightings();
+        const idx = sightings.findIndex((s) => s.id === data.sighting.id);
+        if (idx !== -1) {
+          sightings[idx] = { ...sightings[idx], ...data.sighting };
+          saveSightings(sightings);
+          broadcastRealtime('UPDATE_SIGHTING', sightings[idx]);
+        }
+      }
+    } catch (err) {
+      console.error('WS Message error:', err);
+    }
+  });
+
+  ws.on('close', () => {
+    broadcastPresence();
+  });
+
+  ws.on('error', (err) => {
+    console.error('WS Client error:', err);
+  });
+});
+
+// 2. Server-Sent Events (SSE) clients fallback
 let sseClients: { id: number; res: express.Response }[] = [];
 let nextClientId = 1;
 
-function broadcastSSE(type: string, sighting: any) {
-  const payload = JSON.stringify({ type, sighting });
+// Universal broadcast helper (sends over WebSockets + SSE)
+function broadcastRealtime(type: string, sighting: any) {
+  const payload = JSON.stringify({ type, sighting, timestamp: Date.now() });
+
+  // Broadcast to all active WebSocket clients
+  wss.clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      try {
+        client.send(payload);
+      } catch (err) {
+        console.error('WS Send error:', err);
+      }
+    }
+  });
+
+  // Broadcast to all active SSE clients
   sseClients.forEach((client) => {
     try {
       client.res.write(`data: ${payload}\n\n`);
@@ -157,7 +258,13 @@ function broadcastSSE(type: string, sighting: any) {
 // API Routes
 app.get('/api/sightings', (_req, res) => {
   const sightings = getSightings();
-  res.json({ success: true, sightings });
+  res.json({
+    success: true,
+    sightings,
+    count: sightings.length,
+    connectedDevices: wss.clients.size,
+    timestamp: Date.now(),
+  });
 });
 
 app.post('/api/sightings', (req, res) => {
@@ -177,7 +284,7 @@ app.post('/api/sightings', (req, res) => {
   saveSightings(sightings);
 
   // Broadcast to all other connected screens in real-time
-  broadcastSSE('NEW_SIGHTING', sightingWithId);
+  broadcastRealtime('NEW_SIGHTING', sightingWithId);
 
   res.status(201).json({ success: true, sighting: sightingWithId });
 });
@@ -196,7 +303,7 @@ app.put('/api/sightings/:id', (req, res) => {
   saveSightings(sightings);
 
   // Broadcast update to all other connected screens
-  broadcastSSE('UPDATE_SIGHTING', sightings[index]);
+  broadcastRealtime('UPDATE_SIGHTING', sightings[index]);
 
   res.json({ success: true, sighting: sightings[index] });
 });
@@ -212,21 +319,30 @@ app.get('/api/sightings/stream', (req, res) => {
   const clientId = nextClientId++;
   sseClients.push({ id: clientId, res });
 
-  // Send initial ping
+  // Send initial connected payload
   res.write(`data: ${JSON.stringify({ type: 'CONNECTED', clientId })}\n\n`);
 
-  // Heartbeat every 25 seconds to keep connection alive across proxies
+  // Heartbeat every 20 seconds
   const heartbeat = setInterval(() => {
     try {
       res.write(': heartbeat\n\n');
     } catch {
       clearInterval(heartbeat);
     }
-  }, 25000);
+  }, 20000);
 
   req.on('close', () => {
     clearInterval(heartbeat);
     sseClients = sseClients.filter((c) => c.id !== clientId);
+  });
+});
+
+app.get('/api/health', (_req, res) => {
+  res.json({
+    status: 'ok',
+    activeWsClients: wss.clients.size,
+    activeSseClients: sseClients.length,
+    timestamp: Date.now(),
   });
 });
 
@@ -239,6 +355,21 @@ async function startServer() {
       appType: 'spa',
     });
     app.use(vite.middlewares);
+
+    app.use('*', async (req, res, next) => {
+      const url = req.originalUrl;
+      if (url.startsWith('/api') || url.startsWith('/ws')) {
+        return next();
+      }
+      try {
+        const indexPath = path.resolve(__dirname, 'index.html');
+        let template = fs.readFileSync(indexPath, 'utf-8');
+        template = await vite.transformIndexHtml(url, template);
+        res.status(200).set({ 'Content-Type': 'text/html' }).end(template);
+      } catch (e) {
+        next(e);
+      }
+    });
   } else {
     const distPath = path.join(__dirname, 'dist');
     if (fs.existsSync(distPath)) {
@@ -249,8 +380,8 @@ async function startServer() {
     }
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🐾 PawSafe Live Server running on http://0.0.0.0:${PORT}`);
+  server.listen(PORT, '0.0.0.0', () => {
+    console.log(`🐾 PawSafe Live Server (HTTP + WebSocket) running on http://0.0.0.0:${PORT}`);
   });
 }
 

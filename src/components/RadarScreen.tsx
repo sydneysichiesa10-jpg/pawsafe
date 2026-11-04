@@ -13,6 +13,9 @@ interface RadarScreenProps {
   onUpdateSighting: (updated: RadarSighting) => void;
   onOpenVouchers: () => void;
   onAwardPoints: (points: number, reason: string) => void;
+  networkConnected?: boolean;
+  connectedDevices?: number;
+  onOpenAuth?: () => void;
 }
 
 export const RadarScreen: React.FC<RadarScreenProps> = ({
@@ -24,6 +27,9 @@ export const RadarScreen: React.FC<RadarScreenProps> = ({
   onUpdateSighting,
   onOpenVouchers,
   onAwardPoints,
+  networkConnected = true,
+  connectedDevices = 1,
+  onOpenAuth,
 }) => {
   const [selectedSighting, setSelectedSighting] = useState<RadarSighting | null>(sightings[0] || null);
   const [activeFilter, setActiveFilter] = useState<'all' | 'critical' | 'urgent' | 'secured'>('all');
@@ -83,13 +89,21 @@ export const RadarScreen: React.FC<RadarScreenProps> = ({
       {/* Top Banner with Rescue Karma / Points Tracker */}
       <div className="flex items-center justify-between pb-2.5">
         <div>
-          <h1 className="text-[22px] font-bold text-[#141d1a] tracking-tight flex items-center gap-2">
-            Rescue Radar
+          <div className="flex items-center gap-2">
+            <h1 className="text-[22px] font-bold text-[#141d1a] tracking-tight">
+              Rescue Radar
+            </h1>
             <span className="w-2.5 h-2.5 rounded-full bg-[#a13e28] animate-ping" />
-          </h1>
-          <p className="text-[13px] text-[#404944]">
-            Live volunteer dispatch • <span className="font-semibold text-[#004732]">{currentLocation}</span>
-          </p>
+          </div>
+          <div className="flex items-center flex-wrap gap-2 mt-0.5">
+            <p className="text-[12px] text-[#404944]">
+              Live dispatch • <span className="font-semibold text-[#004732]">{currentLocation}</span>
+            </p>
+            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#e8f7ef] border border-[#aff0d2] text-[10.5px] font-bold text-[#004732] shadow-2xs">
+              <span className={`w-2 h-2 rounded-full ${networkConnected ? 'bg-[#10b981] animate-pulse' : 'bg-[#eab308]'}`} />
+              <span>{networkConnected ? `Live Sync (${connectedDevices} online)` : 'Syncing...'}</span>
+            </div>
+          </div>
         </div>
 
         {/* View mode toggle */}
@@ -114,32 +128,76 @@ export const RadarScreen: React.FC<RadarScreenProps> = ({
       </div>
 
       {/* Achievement Points & Vouchers Callout Bar */}
-      <div className="mb-3 p-2.5 bg-gradient-to-r from-[#004732] to-[#1e5f48] rounded-2xl text-white flex items-center justify-between shadow-sm">
-        <div className="flex items-center gap-2 min-w-0">
-          <div className="w-7 h-7 rounded-full bg-[#fbbc04] text-[#332300] flex items-center justify-center font-bold text-[14px] flex-shrink-0">
-            ⭐
-          </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[12px] font-bold tracking-tight">Rescue Karma:</span>
-              <span className="text-[13px] font-black text-[#aff0d2]">
-                {userProfile.achievementPoints ?? 0} pts
-              </span>
+      {userProfile.isLoggedIn ? (
+        <div className="mb-3 p-2.5 bg-gradient-to-r from-[#004732] to-[#1e5f48] rounded-2xl text-white flex items-center justify-between shadow-sm">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-7 h-7 rounded-full bg-[#fbbc04] text-[#332300] flex items-center justify-center font-bold text-[14px] flex-shrink-0">
+              ⭐
             </div>
-            <p className="text-[10px] text-white/80 truncate">
-              Rescue stray animals to earn +250 pts per save
-            </p>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[12px] font-bold tracking-tight">Rescue Karma:</span>
+                <span className="text-[13px] font-black text-[#aff0d2]">
+                  {userProfile.achievementPoints ?? 0} pts
+                </span>
+                <span className="text-[10px] bg-white/20 px-1.5 py-0.2 rounded-full font-semibold">Saved</span>
+              </div>
+              <p className="text-[10px] text-white/80 truncate">
+                Rescue stray animals to earn +250 pts per save
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={onOpenVouchers}
+            className="py-1 px-3 bg-[#fbbc04] hover:bg-[#ffd24d] text-[#332300] font-black text-[11px] rounded-full transition-all cursor-pointer flex items-center gap-1 shadow-xs flex-shrink-0 active:scale-95"
+          >
+            <span>🏆 Vouchers</span>
+            <span className="material-symbols-outlined text-[13px]">arrow_forward</span>
+          </button>
+        </div>
+      ) : (
+        <div className="mb-3 p-3 bg-gradient-to-r from-[#78350f] via-[#92400e] to-[#b45309] rounded-2xl text-white shadow-sm flex flex-col gap-2">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-7 h-7 rounded-full bg-[#fef08a] text-[#713f12] flex items-center justify-center font-bold text-[14px] flex-shrink-0 animate-pulse">
+                ⏳
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[12px] font-bold tracking-tight">Guest Progress:</span>
+                  <span className="text-[13px] font-black text-[#fef08a]">
+                    {userProfile.achievementPoints ?? 0} pts
+                  </span>
+                  <span className="text-[9.5px] bg-[#dc2626] text-white px-1.5 py-0.2 rounded-full font-bold">Unsaved</span>
+                </div>
+                <p className="text-[10.5px] text-[#fef3c7] font-medium leading-tight mt-0.5">
+                  ⚠️ Points progress will be <strong>lost</strong> if you leave without signing in!
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              {onOpenAuth && (
+                <button
+                  onClick={onOpenAuth}
+                  className="py-1.5 px-3 bg-[#fef08a] hover:bg-white text-[#78350f] font-black text-[11px] rounded-full transition-all cursor-pointer flex items-center gap-1 shadow-xs active:scale-95"
+                >
+                  <span className="material-symbols-outlined text-[13px]">login</span>
+                  <span>Sign In to Save</span>
+                </button>
+              )}
+              <button
+                onClick={onOpenVouchers}
+                className="py-1.5 px-2.5 bg-black/25 hover:bg-black/35 text-white font-bold text-[11px] rounded-full transition-all cursor-pointer flex items-center gap-0.5"
+                title="Vouchers Info"
+              >
+                <span>🏆</span>
+              </button>
+            </div>
           </div>
         </div>
-
-        <button
-          onClick={onOpenVouchers}
-          className="py-1 px-3 bg-[#fbbc04] hover:bg-[#ffd24d] text-[#332300] font-black text-[11px] rounded-full transition-all cursor-pointer flex items-center gap-1 shadow-xs flex-shrink-0 active:scale-95"
-        >
-          <span>🏆 Vouchers</span>
-          <span className="material-symbols-outlined text-[13px]">arrow_forward</span>
-        </button>
-      </div>
+      )}
 
       {/* Filter Chips */}
       <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-3">

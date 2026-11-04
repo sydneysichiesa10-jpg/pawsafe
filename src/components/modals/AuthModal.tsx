@@ -4,10 +4,11 @@ import { AVATAR_PRESETS, DEMO_RESCUER_PROFILE } from '../../data/mockData';
 
 interface AuthModalProps {
   onClose: () => void;
-  onLoginSuccess: (profile: UserProfile) => void;
+  onLoginSuccess: (profile: UserProfile, guestPointsToKeep?: number) => void;
+  guestPoints?: number;
 }
 
-export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLoginSuccess }) => {
+export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLoginSuccess, guestPoints = 0 }) => {
   const [tab, setTab] = useState<'signin' | 'signup'>('signin');
 
   // Sign in state
@@ -73,16 +74,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLoginSuccess })
       rescuesAssisted: isSydney ? 12 : 1,
       petsFostered: isSydney ? 4 : 0,
       joinedDate: 'Joined March 2026',
-      achievementPoints: isSydney ? 650 : 200,
+      achievementPoints: (isSydney ? 650 : 200) + guestPoints,
       redeemedVouchers: [],
     };
 
-    onLoginSuccess(profile);
+    onLoginSuccess(profile, guestPoints);
     onClose();
   };
 
   const handleDemoSignIn = () => {
-    onLoginSuccess(DEMO_RESCUER_PROFILE);
+    const profile = {
+      ...DEMO_RESCUER_PROFILE,
+      achievementPoints: (DEMO_RESCUER_PROFILE.achievementPoints ?? 650) + guestPoints,
+    };
+    onLoginSuccess(profile, guestPoints);
     onClose();
   };
 
@@ -127,17 +132,31 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLoginSuccess })
       rescuesAssisted: 0,
       petsFostered: 0,
       joinedDate: 'Joined just now',
-      achievementPoints: 100,
+      achievementPoints: guestPoints,
       redeemedVouchers: [],
     };
 
-    onLoginSuccess(newProfile);
+    onLoginSuccess(newProfile, guestPoints);
     onClose();
   };
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-fadeIn">
       <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-[#e6f0eb] relative my-auto">
+        {/* Points preservation notice if guest has unsaved points */}
+        {guestPoints > 0 && (
+          <div className="mb-4 p-3 bg-[#fff8e6] border border-[#fde7b3] rounded-2xl flex items-center gap-2.5 text-[12px] text-[#7a5500]">
+            <span className="material-symbols-outlined text-[22px] text-[#b45309] flex-shrink-0 animate-bounce">
+              savings
+            </span>
+            <div>
+              <span className="font-bold text-[#b45309]">Save your {guestPoints} points!</span>
+              <p className="text-[11px] text-[#92400e] leading-snug">
+                Signing in will permanently save your points to your account so your progress isn't lost.
+              </p>
+            </div>
+          </div>
+        )}
         {/* Close Button */}
         <button
           onClick={onClose}

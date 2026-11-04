@@ -61,13 +61,23 @@ export const Header: React.FC<HeaderProps> = ({
           {onOpenVouchers && (
             <button
               onClick={onOpenVouchers}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#fff9eb] hover:bg-[#ffefc6] text-[#7a5500] font-black text-[12px] border border-[#fde7b3] transition-all cursor-pointer active:scale-95 shadow-2xs"
-              title="Achievement Points • Tap to Redeem Vouchers"
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-full font-black text-[12px] border transition-all cursor-pointer active:scale-95 shadow-2xs ${
+                userProfile.isLoggedIn
+                  ? 'bg-[#fff9eb] hover:bg-[#ffefc6] text-[#7a5500] border-[#fde7b3]'
+                  : 'bg-[#fff3e0] hover:bg-[#ffe0b2] text-[#b45309] border-[#fed7aa]'
+              }`}
+              title={
+                userProfile.isLoggedIn
+                  ? 'Permanent Karma Points • Tap to Redeem Vouchers'
+                  : 'Guest Points (Unsaved) • Sign in to save progress before leaving!'
+              }
               type="button"
             >
-              <span>⭐</span>
+              <span>{userProfile.isLoggedIn ? '⭐' : '⏳'}</span>
               <span>{userProfile.achievementPoints ?? 0}</span>
-              <span className="text-[10px] font-bold text-[#855e00] hidden xs:inline">PTS</span>
+              <span className="text-[10px] font-bold hidden xs:inline">
+                {userProfile.isLoggedIn ? 'PTS' : 'UNSAVED'}
+              </span>
             </button>
           )}
 

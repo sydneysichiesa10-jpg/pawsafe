@@ -51,27 +51,40 @@ export const ReportScreen: React.FC<ReportScreenProps> = ({
     e.preventDefault();
     setIsSubmitting(true);
 
+    const speciesTitles: Record<string, string> = {
+      dog: 'Stray Dog in Need of Rescue & Triage',
+      puppies: 'Litter of Young Puppies Needing Shelter',
+      cat: 'Distressed Cat Spotted Near Traffic',
+      reptile: 'Displaced Exotic Reptile / Tortoise',
+      bird: 'Grounded Bird in Need of Wildlife Care',
+      other: 'Stray Animal in Distress Reported',
+    };
+
+    const cleanTitle = description.trim()
+      ? (description.trim().length > 42 ? description.trim().slice(0, 40) + '...' : description.trim())
+      : (speciesTitles[animalType] || 'Stray Animal Reported');
+
     const newSighting: RadarSighting = {
       id: `sight-${Date.now()}`,
       animalType,
-      title: `${animalType.toUpperCase()}: ${urgency.toUpperCase()} Rescue Report`,
-      description: description || `Stray ${animalType} spotted at ${location}. Collar: ${hasCollar}.`,
-      location: location || 'East Austin, TX',
-      coordinates: { x: 50 + Math.floor(Math.random() * 20 - 10), y: 50 + Math.floor(Math.random() * 20 - 10) },
-      distance: '0.4 mi away',
+      title: cleanTitle,
+      description: description || `Stray ${animalType} spotted at ${location}. Collar: ${hasCollar === 'yes-tags' ? 'Wearing tags' : hasCollar === 'yes-no-tags' ? 'Collar with no tag' : 'No collar'}. Please proceed with care.`,
+      location: location || 'Jl. Kemang Raya & Kemang Timur, Jakarta Selatan',
+      coordinates: { x: 50 + Math.floor(Math.random() * 24 - 12), y: 50 + Math.floor(Math.random() * 24 - 12) },
+      distance: `${(0.3 + Math.random() * 1.5).toFixed(1)} km away`,
       timeAgo: 'Just now',
       urgency,
       status: 'Searching',
       respondersCount: 1,
       image: photoPreview,
-      reportedBy: userProfile?.isLoggedIn ? `You (${userProfile.nickname})` : 'You (Guest Rescuer)',
+      reportedBy: userProfile?.isLoggedIn ? `${userProfile.nickname} (Verified)` : 'Community Rescuer',
     };
 
     setTimeout(() => {
       setIsSubmitting(false);
       setSubmittedReport(newSighting);
       onSightingReported(newSighting);
-    }, 900);
+    }, 700);
   };
 
   if (submittedReport) {
@@ -82,9 +95,9 @@ export const ReportScreen: React.FC<ReportScreenProps> = ({
         </div>
 
         <div>
-          <h2 className="text-[22px] font-bold text-[#141d1a]">Alert Broadcasted to Network!</h2>
+          <h2 className="text-[22px] font-bold text-[#141d1a]">Broadcasted to All Rescuers!</h2>
           <p className="text-[14px] text-[#404944] mt-1 max-w-xs mx-auto">
-            18 volunteers within 3 km have been notified with high priority. Responders are mobilizing.
+            Live alert pushed to all connected devices in the area. Volunteers and clinics are alerted.
           </p>
         </div>
 

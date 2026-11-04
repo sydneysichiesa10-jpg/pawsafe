@@ -28,7 +28,7 @@ export const DEFAULT_GUEST_PROFILE: UserProfile = {
   rescuesAssisted: 0,
   petsFostered: 0,
   joinedDate: 'Browsing as Guest',
-  achievementPoints: 100,
+  achievementPoints: 0,
   redeemedVouchers: [],
 };
 
